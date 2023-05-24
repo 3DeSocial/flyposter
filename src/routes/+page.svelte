@@ -6,12 +6,11 @@
   let height = window.innerHeight;
 
 	let el;
-	let count = 200;
 
 	onMount ((count) => {
 		//const audioElement = document.getElementById('audioElement');
 		//audioElement.play();
-		createScene(el, width, height, count);
+		createScene(el, width, height, 200);
 	});
 	let audioSource = '/melodic-techno-03-extended-version-moogify-9867.mp3';
 
