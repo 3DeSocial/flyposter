@@ -65,7 +65,9 @@ const getPostImages = async(count)=>{
                     userProfileImgUrl: buildProfilePictureUrl(post.ProfileEntryResponse.PublicKeyBase58Check,{nodeURI:'https://node.deso.org'}) 
       };
       count--;
-      images.push(imgData);
+      if((imgData.url!='')&&(imgData.url!=null)){
+        images.push(imgData);
+      }
     }
     
   });
