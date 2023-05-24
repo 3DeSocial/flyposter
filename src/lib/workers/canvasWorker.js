@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.152.2/three.module.min.js';
 
 let renderer, roadSegment1, roadSegment2, tunnelTexture;
 let camera, scene, roadGroup = new THREE.Group(), cubes =[];
