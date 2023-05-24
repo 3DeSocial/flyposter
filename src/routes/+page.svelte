@@ -6,7 +6,7 @@
   let height = window.innerHeight;
 
 	let el;
-	let count = 100;
+	let count = 200;
 
 	onMount ((count) => {
 		//const audioElement = document.getElementById('audioElement');

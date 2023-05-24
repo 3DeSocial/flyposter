@@ -41,7 +41,7 @@ camera.position.z = 0; // Start at the beginning of the road
     addRoadSegments(images).then(()=>{
 // Define the target position for the camera
 var targetPosition = new THREE.Vector3();
-var roadWidth = 20; // Width of the road
+var roadWidth = 40; // Width of the road
 
 // Define the speed of the camera movement
 var cameraSpeed = 0.01;
@@ -67,11 +67,11 @@ const animate = function () {
  tunnelTexture.offset.x -= (tunnelSpeed/2);
 
   // Loop road segments
- if (roadSegment1.position.z > camera.position.z + 500) {
-   roadSegment1.position.z = roadSegment2.position.z - 500;
+ if (roadSegment1.position.z > camera.position.z + 1000) {
+   roadSegment1.position.z = roadSegment2.position.z - 1000;
  }
- if (roadSegment2.position.z > camera.position.z + 500) {
-   roadSegment2.position.z = roadSegment1.position.z - 500;
+ if (roadSegment2.position.z > camera.position.z + 1000) {
+   roadSegment2.position.z = roadSegment1.position.z - 1000;
  }
  
 
@@ -124,7 +124,7 @@ const addRoadSegments = async(images)=> {
     roadSegment1 = new THREE.Group();
     roadSegment2 = new THREE.Group();
 
-    var roadGeometry = new THREE.PlaneGeometry(10, 500);
+    var roadGeometry = new THREE.PlaneGeometry(10, 1000);
     roadGeometry.rotateX(-Math.PI / 2); // Rotate to lie flat
     var roadMaterial1 = new THREE.MeshBasicMaterial({map:texture});
     for (var i = 0; i < 2; i++) {
@@ -132,11 +132,11 @@ const addRoadSegments = async(images)=> {
         var roadMaterial = i === 0 ? roadMaterial1 : roadMaterial1;
 
         var road = new THREE.Mesh(roadGeometry, roadMaterial);
-        road.position.y = -20; // Position road segments
+        road.position.y = -40; // Position road segments
 
         roadSegment.add(road);
 
-        roadSegment.position.z = i === 0 ? 0 : -500; // Position road segments
+        roadSegment.position.z = i === 0 ? 0 : -1000; // Position road segments
 
         scene.add(roadSegment);
         roadSegments.push(roadSegment);
@@ -167,7 +167,7 @@ const positionCubes = (textures)=>{
   var minDistance = 10; // Minimum distance between cubes  
   var gridSize = cubeSize + minDistance; // Size of each grid cell
   var roadWidth = 50; // Width of the road
-  var roadLength = 500; // Length of the road
+  var roadLength = 1000; // Length of the road
   var grid = new Array(Math.ceil(roadWidth / gridSize) * Math.ceil(roadLength / gridSize)).fill(false);
   var maxAttempts = 100; // Maximum number of attempts to find an unoccupied cell
   
@@ -277,10 +277,10 @@ const createTunnel =async () =>{
       tunnelTexture.wrapS = tunnelTexture.wrapT = THREE.RepeatWrapping;
   var material = new THREE.MeshBasicMaterial({map:tunnelTexture, side: THREE.BackSide });        
 
-var geometry = new THREE.CylinderGeometry(40, 40, 500, 32, 1, true);
+var geometry = new THREE.CylinderGeometry(60, 60, 1000, 32, 1, true);
 var mesh = new THREE.Mesh(geometry, material);
 mesh.rotation.x = Math.PI/2;
-mesh.position.z = -250;
+mesh.position.z = -500;
 scene.add(mesh);
 
 }
