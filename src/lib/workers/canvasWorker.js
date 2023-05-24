@@ -174,38 +174,46 @@ const positionCubes = (textures)=>{
   textures.forEach((texture, idx)=>{
     let roadSegment = roadSegments[segment];
     segment = (segment===0)?1:0;
+      let cube = createCube(texture, cubeSize);
+      if(cube){
+      var cellIndex;
+      var attempts = 0;
+      // Try to find an unoccupied cell
+      do {
+          cellIndex = Math.floor(Math.random() * grid.length);
+          attempts++;
+      } while (grid[cellIndex] && attempts < maxAttempts);
 
-    let cube = createCube(texture, cubeSize);
-    var cellIndex;
-    var attempts = 0;
-    // Try to find an unoccupied cell
-    do {
-        cellIndex = Math.floor(Math.random() * grid.length);
-        attempts++;
-    } while (grid[cellIndex] && attempts < maxAttempts);
+      if (!grid[cellIndex]) {
+          var cellX = (cellIndex % Math.ceil(roadWidth / gridSize)) * gridSize + gridSize / 2 - roadWidth / 2;
+          var cellZ = Math.floor(cellIndex / Math.ceil(roadWidth / gridSize)) * gridSize - roadLength / 2;
 
-    if (!grid[cellIndex]) {
-        var cellX = (cellIndex % Math.ceil(roadWidth / gridSize)) * gridSize + gridSize / 2 - roadWidth / 2;
-        var cellZ = Math.floor(cellIndex / Math.ceil(roadWidth / gridSize)) * gridSize - roadLength / 2;
+          cube.position.x = cellX;
+          cube.position.y = (Math.random() - 0.5) * roadWidth; // Random y position for variation
+          cube.position.z = cellZ;
+          cube.rotation.x = Math.PI;
 
-        cube.position.x = cellX;
-        cube.position.y = (Math.random() - 0.5) * roadWidth; // Random y position for variation
-        cube.position.z = cellZ;
-        cube.rotation.x = Math.PI;
+          grid[cellIndex] = true;
+          var randomInt = Math.floor(Math.random() * 2) + 1;
 
-        grid[cellIndex] = true;
-        var randomInt = Math.floor(Math.random() * 2) + 1;
-
-        cube.userData = {direction: randomInt};
-        cubes.push(cube);
-        roadSegment.add(cube);
+          cube.userData = {direction: randomInt};
+          cubes.push(cube);
+          roadSegment.add(cube);
+        }
       }
+    
   })
 }
 
 const createCube = (texture,cubeSize)=>{
   let imgTexture = texture[0];
   let userTexture = texture[1];
+  if(!imgTexture){
+    return false;
+  };
+  if(!userTexture){
+    return false;
+  };
    var cubeMaterial = new THREE.MeshBasicMaterial({map:imgTexture});        
    var userMaterial = new THREE.MeshBasicMaterial({map:userTexture});        
 
