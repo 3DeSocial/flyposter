@@ -36,6 +36,7 @@
 		"filepond-plugin-image-preview": "^4.6.11",
 		"rollup-plugin-node-polyfills": "^0.2.1",
 		"svelte-filepond": "^0.2.0",
+		"three": "^0.149.0",
 		"vite-plugin-cross-origin-isolation": "^0.1.6"
 	},
 	"devDependencies": {
