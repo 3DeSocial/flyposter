@@ -25,7 +25,7 @@
 </svelte:head>
 
 <div class="loader-ctr" style="text-align: center;">
-	<img style="max-height: 140px; margin: 0 auto;" src="/3desocial.gif"/>
+	<img alt="3DeSocial Logo" style="max-height: 140px; margin: 0 auto;" src="/3desocial.gif"/>
 	<h1>Please Wait...</h1>
 	<p>Loading latest posts.</p>
 </div>
