@@ -1,10 +1,11 @@
 import { getUsersStateless, getPostsStateless, buildProfilePictureUrl } from 'deso-protocol';
 import {InputController, InputHandler} from '$lib/classes/D3D_InputController.mjs';
+import { VRButton } from 'https://unpkg.com/three@0.152.2/examples/jsm/webxr/VRButton.js';
 let workers =[], inputHandler, inputController, canvasWorker;
 const workerURL = new URL('./workers/canvasWorker.js', import.meta.url);
 
 export const createScene = async (el, width,height, count) => {
-
+   document.body.appendChild(VRButton.createButton());
 
     let images = await getPostImages(count);
     canvasWorker = new Worker(workerURL, { type: "module" });
