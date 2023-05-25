@@ -207,6 +207,7 @@ const addRoadSegments = async(images)=> {
     })
     .catch((error) => {
       console.error('There was an error loading the images:', error);
+      resolve()
     });  
 
     })
