@@ -1,4 +1,4 @@
-import * as THREE from 'https://unpkg.com/three@0.152.2/build/three.module.js';
+import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.152.2/three.module.min.js';
 import { VRButton } from 'https://unpkg.com/three@0.152.2/examples/jsm/webxr/VRButton.js';
 
 let renderer, roadSegment1, roadSegment2, tunnelTexture;
