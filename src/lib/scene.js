@@ -1,13 +1,13 @@
 import { getUsersStateless, getPostsStateless, buildProfilePictureUrl } from 'deso-protocol';
-
-let workers =[];
+import {InputController, InputHandler} from '$lib/classes/D3D_InputController.mjs';
+let workers =[], inputHandler, inputController, canvasWorker;
 const workerURL = new URL('./workers/canvasWorker.js', import.meta.url);
 
 export const createScene = async (el, width,height, count) => {
 
 
     let images = await getPostImages(count);
-    let canvasWorker = new Worker(workerURL, { type: "module" });
+    canvasWorker = new Worker(workerURL, { type: "module" });
     const offscreen = el.transferControlToOffscreen();
 
     
@@ -16,7 +16,8 @@ export const createScene = async (el, width,height, count) => {
         canvas: offscreen,
         height: height,
         width: width,
-        images: images
+        images: images,
+        devicePixelRatio: window.devicePixelRatio
       }
 
 
@@ -35,20 +36,88 @@ export const createScene = async (el, width,height, count) => {
         canvasWorker.postMessage(payload);   
       });    
       window.dispatchEvent(new Event('resize'));      
-      /*DeSo.configure({
-        
-          spendingLimitOptions: {
-            // NOTE: this value is in Deso nanos, so 1 Deso * 1e9
-            GlobalDESOLimit: 10 * 1e9, // 1 Deso
-            // Map of transaction type to the number of times this derived key is
-            // allowed to perform this operation on behalf of the owner public key
-            TransactionCountLimitMap: {
-              BASIC_TRANSFER: 20, // 2 basic transfer transactions are authorized
-              SUBMIT_POST: 4, // 4 submit post transactions are authorized
-            }
-          },
-          appName: 'Flyposter'
-  });*/
+    
+      initController();
+}
+
+const initController =() =>{
+
+
+
+  inputHandler = new InputHandler();
+  inputController = new InputController({inputHandler: inputHandler});
+  // Register keyboard action for the 'A' key
+  inputHandler.registerKeyboardAction('w', (event) => {
+    dispatchKeys(event)
+  });
+
+  inputHandler.registerKeyboardAction('s', (event) => {
+    dispatchKeys(event)
+  });
+
+  inputHandler.registerKeyboardAction('a', (event) => {
+    dispatchKeys(event)
+  });
+
+  inputHandler.registerKeyboardAction('d', (event) => {
+    dispatchKeys(event)
+  });
+
+  inputHandler.registerKeyboardAction('r', (event) => {
+    dispatchKeys(event)
+  });
+  
+  inputHandler.registerKeyboardAction('f', (event) => {
+    dispatchKeys(event)
+  });  
+
+  // Register mouse action for the left mouse button (button 0)
+  inputHandler.registerMouseAction('mousedown', (mousePosition) => {
+  });
+
+  // Register mouse action for the left mouse button (button 0)
+  inputHandler.registerMouseAction('mouseup', (event) => {
+    dispatchMouse(event);
+  });
+  
+  // Register mouse action for the left mouse button (button 0)
+  inputHandler.registerMouseAction('mousemove', (event) => {
+    dispatchMouse(event);
+  });  
+
+  // Register touch action for the first touch point (identifier 0)
+  inputHandler.registerTouchAction(0, (event) => {
+  });
+
+}
+
+const dispatchKeys = (event) =>{
+  if(!canvasWorker){
+    return;
+  }
+  canvasWorker.postMessage({
+    method: 'event',
+    payload: {
+        type: event.type,
+        key: event.key,
+        keyCode: event.keyCode,
+        code: event.code
+    },
+  });
+}
+
+const dispatchMouse = (event) =>{
+  if(!canvasWorker){
+    return;
+  }
+  canvasWorker.postMessage({
+    method: 'event',
+    payload: {
+        type: event.type,
+        clientX: event.clientX,
+        clientY: event.clientY,
+    },
+  });
 }
 
 const getPostImages = async(count)=>{

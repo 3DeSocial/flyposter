@@ -1,11 +1,12 @@
-import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.152.2/three.module.min.js';
+import * as THREE from 'https://unpkg.com/three@0.152.2/build/three.module.js';
+import { VRButton } from 'https://unpkg.com/three@0.152.2/examples/jsm/webxr/VRButton.js';
 
-let renderer, roadSegment1, roadSegment2, tunnelTexture;
+let canvas, renderer, roadSegment1, roadSegment2, tunnelTexture, movementSpeed;
 let camera, scene, roadGroup = new THREE.Group(), cubes =[];
 let roadSegments =[];
 
 self.onmessage = function(event) {
-  
+    let payload = event.data.payload;
     switch(event.data.method){
         case 'canvas':
           
@@ -19,17 +20,73 @@ self.onmessage = function(event) {
         break;        
         case 'resize':
           updateRendererSize(event.data);
+        break;
+        case 'event':
+         switch(payload.type){
+          case 'mousemove':
+          break;
+          case 'keydown':
+            moveCamera(payload);
+          break;
+          default:
+          break;
+         };
+        break;
+        default:
+
         break;        
     }
  
 };
 
+const moveCamera = (payload)=>{
+  let speed = 0.5;
+  switch(payload.code){
+    case 'KeyW':
+      if(camera.position.y<40){
+        camera.position.y+=speed;
+      }
+    break;
+    case 'KeyS':
+      if(camera.position.y>-40){
+
+      camera.position.y-=speed;
+    }      
+    break;
+    case 'KeyA':
+      if(camera.position.x>-40){
+
+      camera.position.x-=speed;
+    }      
+    break;
+    case 'KeyD':
+      if(camera.position.x<40){
+
+      camera.position.x+=speed;      
+    }      
+    break;
+    case 'KeyR':
+      movementSpeed += 0.01;
+    break;   
+    case 'KeyF':
+      if(movementSpeed>0){
+        movementSpeed -= 0.01;
+      }
+    break;                                  
+  }
+}
+
 const initCanvas=(d)=>{
-    const canvas = d.canvas;
+    canvas = d.canvas;
     const innerWidth = d.width;
     const innerHeight = d.height;
     const images = d.images;
-    renderer = new THREE.WebGLRenderer({ canvas: canvas });
+    const devicePixelRatio = d.devicePixelRatio;
+    renderer = new THREE.WebGLRenderer( { antialias: true, canvas:canvas } );
+    renderer.setPixelRatio( devicePixelRatio );    
+ //   renderer.setSize( innerWidth, innerHeight );    
+		renderer.shadowMap.enabled = true;
+		renderer.xr.enabled = true;    
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
     createTunnel();
@@ -46,8 +103,10 @@ var roadWidth = 40; // Width of the road
 // Define the speed of the camera movement
 var cameraSpeed = 0.01;
 var rotationSpeed =  0.01;
-var movementSpeed = 0.5;
+movementSpeed = 0.5;
 var tunnelSpeed = movementSpeed/100;
+
+
 const animate = function () {
   cubes.forEach((cube)=>{
     // cube.rotation.x += 0.01;
@@ -76,7 +135,7 @@ const animate = function () {
  
 
   // Generate a new target position if the camera is close to the current target
-  if (camera.position.distanceTo(targetPosition) < 1) {
+  /*if (camera.position.distanceTo(targetPosition) < 1) {
     targetPosition.x = (Math.random() - 0.5) * roadWidth;
     targetPosition.y = (Math.random() - 0.5) * roadWidth;
   }
@@ -86,7 +145,7 @@ const animate = function () {
 
   // Update the camera's direction
   camera.lookAt(new THREE.Vector3(0, 0, camera.position.z - 100));
-
+*/
    // Update the time uniform of the shader material
  // material.uniforms.time.value = clock.getElapsedTime();
 
@@ -298,7 +357,12 @@ scene.add(mesh);
 
 
 const updateRendererSize = (d)=> {
-  const canvas = renderer.domElement;
+  if(!renderer.domElement){  
+    return;
+  }
+  if(!camera){  
+    return;
+  }
   const width = d.width;
   const height = d.height;
   const needResize = canvas.width !== width || canvas.height !== height;
@@ -306,6 +370,7 @@ const updateRendererSize = (d)=> {
     camera.aspect =width /height;
     camera.updateProjectionMatrix();    
     renderer.setSize(width, height, false);
-  }
+   }
+  
   return needResize;
 }
