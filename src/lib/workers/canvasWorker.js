@@ -81,12 +81,12 @@ const initCanvas=(d)=>{
     const innerWidth = d.width;
     const innerHeight = d.height;
     const images = d.images;
-    const devicePixelRatio = d.devicePixelRatio;
+//const devicePixelRatio = d.devicePixelRatio;
     renderer = new THREE.WebGLRenderer( { canvas:canvas } );
   //  renderer.setPixelRatio( devicePixelRatio );    
  //   renderer.setSize( innerWidth, innerHeight );    
-		renderer.shadowMap.enabled = true;
-		renderer.xr.enabled = true;    
+	//	renderer.shadowMap.enabled = true;
+//		renderer.xr.enabled = true;    
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
     createTunnel();
