@@ -83,7 +83,7 @@ const initCanvas=(d)=>{
     const images = d.images;
     const devicePixelRatio = d.devicePixelRatio;
     renderer = new THREE.WebGLRenderer( { canvas:canvas } );
-    renderer.setPixelRatio( devicePixelRatio );    
+  //  renderer.setPixelRatio( devicePixelRatio );    
  //   renderer.setSize( innerWidth, innerHeight );    
 		renderer.shadowMap.enabled = true;
 		renderer.xr.enabled = true;    
