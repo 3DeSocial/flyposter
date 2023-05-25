@@ -66,11 +66,11 @@ const moveCamera = (payload)=>{
     }      
     break;
     case 'KeyR':
-      movementSpeed += 0.01;
+      movementSpeed += 0.1;
     break;   
     case 'KeyF':
       if(movementSpeed>0){
-        movementSpeed -= 0.01;
+        movementSpeed -= 0.1;
       }
     break;                                  
   }
