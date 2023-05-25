@@ -110,7 +110,7 @@ const addCube = () =>{
 
 const addRoadSegments = async(images)=> {
 
-  var response = await fetch('/scifi_surface.jpg');
+  var response = await fetch('/textures/scifi_surface.jpg');
   var blob = await response.blob();
   var bitmap = await createImageBitmap(blob);
 
@@ -267,9 +267,18 @@ const loadImage = async (image)=>{
 }
 
 const createTunnel =async () =>{
+  let textures = ['/textures/psychedelic-stripes.png',
+                  '/textures/circuits-1.png',
+                  '/textures/circuits-2.png',
+                  '/textures/circuits-3.png',
+                  '/textures/sl_031420_28950_10.jpg',
+                  '/textures/17266.jpg', 
+                  '/textures/scifi_surface.jpg']
 
-
-  var response = await fetch('/textures/17266.jpg');
+  let noTextures = textures.length-1;
+  var randomInt = Math.floor(Math.random() * noTextures);
+  let textureUrl = textures[randomInt]
+  var response = await fetch(textureUrl);
   var blob = await response.blob();
   var bitmap = await createImageBitmap(blob);
       tunnelTexture = new THREE.Texture(bitmap);
