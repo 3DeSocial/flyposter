@@ -273,7 +273,9 @@ const createTunnel =async () =>{
                   '/textures/circuits-3.png',
                   '/textures/sl_031420_28950_10.jpg',
                   '/textures/17266.jpg', 
-                  '/textures/scifi_surface.jpg']
+                  '/textures/scifi_surface.jpg',
+                  '/textures/alien-planet.png',
+                  '/textures/flames1.png']
 
   let noTextures = textures.length-1;
   var randomInt = Math.floor(Math.random() * noTextures);
