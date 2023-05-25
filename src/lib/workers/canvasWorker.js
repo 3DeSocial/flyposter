@@ -1,7 +1,7 @@
 import * as THREE from 'https://unpkg.com/three@0.152.2/build/three.module.js';
 import { VRButton } from 'https://unpkg.com/three@0.152.2/examples/jsm/webxr/VRButton.js';
 
-let renderer, roadSegment1, roadSegment2, tunnelTexture, movementSpeed;
+let renderer, roadSegment1, roadSegment2, tunnelTexture;
 let camera, scene, roadGroup = new THREE.Group(), cubes =[];
 let roadSegments =[];
 
@@ -66,12 +66,12 @@ const moveCamera = (payload)=>{
     }      
     break;
     case 'KeyR':
-      movementSpeed += 0.1;
+    //  movementSpeed += 0.1;
     break;   
     case 'KeyF':
-      if(movementSpeed>0){
+  /*    if(movementSpeed>0){
         movementSpeed -= 0.1;
-      }
+      }*/
     break;                                  
   }
 }
@@ -103,7 +103,7 @@ var roadWidth = 40; // Width of the road
 // Define the speed of the camera movement
 var cameraSpeed = 0.01;
 var rotationSpeed =  0.01;
-movementSpeed = 0.5;
+var movementSpeed = 0.5;
 var tunnelSpeed = movementSpeed/100;
 
 
