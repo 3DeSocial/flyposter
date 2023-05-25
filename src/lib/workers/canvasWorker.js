@@ -1,7 +1,7 @@
 import * as THREE from 'https://unpkg.com/three@0.152.2/build/three.module.js';
 import { VRButton } from 'https://unpkg.com/three@0.152.2/examples/jsm/webxr/VRButton.js';
 
-let canvas, renderer, roadSegment1, roadSegment2, tunnelTexture, movementSpeed;
+let renderer, roadSegment1, roadSegment2, tunnelTexture, movementSpeed;
 let camera, scene, roadGroup = new THREE.Group(), cubes =[];
 let roadSegments =[];
 
@@ -77,7 +77,7 @@ const moveCamera = (payload)=>{
 }
 
 const initCanvas=(d)=>{
-    canvas = d.canvas;
+    const canvas = d.canvas;
     const innerWidth = d.width;
     const innerHeight = d.height;
     const images = d.images;
@@ -360,10 +360,15 @@ scene.add(mesh);
 
 
 const updateRendererSize = (d)=> {
+
   if(!renderer.domElement){  
     return;
   }
   if(!camera){  
+    return;
+  }
+  const canvas = renderer.domElement;
+  if(!canvas){  
     return;
   }
   const width = d.width;
