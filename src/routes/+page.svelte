@@ -10,7 +10,7 @@
 	onMount ((count) => {
 		//const audioElement = document.getElementById('audioElement');
 		//audioElement.play();
-		createScene(el, width, height, 200);
+		createScene(el, width, height, 10);
 	});
 	let audioSource = '/melodic-techno-03-extended-version-moogify-9867.mp3';
 

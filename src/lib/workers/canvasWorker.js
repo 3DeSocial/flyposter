@@ -28,6 +28,12 @@ self.onmessage = function(event) {
           case 'keydown':
             moveCamera(payload);
           break;
+          case 'mousedown':
+            handleTouch(payload);
+          break;
+          case 'touchstart':
+            handleTouch(payload);
+          break;                    
           default:
           break;
          };
@@ -39,6 +45,9 @@ self.onmessage = function(event) {
  
 };
 
+const handleTouch = (payload)=>{
+  console.log(payload);
+}
 const moveCamera = (payload)=>{
   let speed = 0.5;
   switch(payload.code){

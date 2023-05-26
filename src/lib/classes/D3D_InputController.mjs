@@ -53,12 +53,23 @@ class InputController {
     }
   
     handleTouchStart(event) {
-      for (let touch of event.changedTouches) {
-        this.touchState.set(touch.identifier, { x: touch.clientX, y: touch.clientY });
-      }
+      // Get the touch object
+      const touch = event.changedTouches[0];
+    
+      // Get the x and y screen coordinates
+      const x = touch.screenX;
+      const y = touch.screenY;
+    
+      this.touchState.set(touch.identifier, { x: touch.screenX, y: touch.screenY });
+      this.inputHandler.handleInput(event);           
+
+
+      
     }
   
     handleTouchEnd(event) {
+      console.log(event);
+
       for (let touch of event.changedTouches) {
         this.touchState.delete(touch.identifier);
       }
@@ -142,7 +153,13 @@ class InputController {
           if(this.actions.mouse[inputEvent.type]){
             this.actions.mouse[inputEvent.type](inputEvent)          
           }
-        break;        
+        break;     
+        case 'touchstart':
+        case 'touchend':
+          if(this.actions.touch[inputEvent.type]){
+            this.actions.touch[inputEvent.type](inputEvent)          
+          }
+        break;           
       }
       // Handle mouse input
    /*   let mousePosition = inputController.getMousePosition();

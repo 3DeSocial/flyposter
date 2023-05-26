@@ -86,7 +86,8 @@ const initController =() =>{
   });  
 
   // Register touch action for the first touch point (identifier 0)
-  inputHandler.registerTouchAction(0, (event) => {
+  inputHandler.registerTouchAction('touchstart', (event) => {
+    dispatchTouch(event);
   });
 
 }
@@ -106,6 +107,31 @@ const dispatchKeys = (event) =>{
   });
 }
 
+const dispatchTouch = (event) =>{
+  if(!canvasWorker){
+    return;
+  }
+
+  const touch = event.changedTouches[0];
+  console.log('touch event: ',event);
+  console.log('touch event: ',touch);
+
+  canvasWorker.postMessage({
+    method: 'event',
+    payload: {
+        type: event.type,
+        clientX: touch.clientX,
+        clientY: touch.clientY,
+        pageX: touch.pageX,
+        pageY: touch.pageY,
+        radiusX: touch.radiusX,
+        radiusY: touch.radiusY,
+        screenX: touch.screenX,
+        screenY: touch.screenY             
+    },
+  });
+}
+
 const dispatchMouse = (event) =>{
   if(!canvasWorker){
     return;
@@ -119,7 +145,6 @@ const dispatchMouse = (event) =>{
     },
   });
 }
-
 const getPostImages = async(count)=>{
   let images = [];
   let posts = await getPosts(count);
