@@ -143,8 +143,8 @@ button#VRButton {
 }
 #hud-text h4 {
   display: block;
-  width: 100%;
   margin: 0;
+  word-wrap: break-word;
 }
 #hud-text {
         display: flex;

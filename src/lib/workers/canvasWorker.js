@@ -156,7 +156,7 @@ const checkAndRemoveFromGroup = (intersectedObject) => {
           centerPosition.x = camera.position.x;
           centerPosition.y = camera.position.y+4;
           centerPosition.z = camera.position.z-20;
-        if(description:intersectedObject.userData.imageData){
+        if(intersectedObject.userData.imageData){
           displayPost({description:intersectedObject.userData.imageData.description,
                       user:intersectedObject.userData.imageData.user,
                       userDesc:intersectedObject.userData.imageData.description,

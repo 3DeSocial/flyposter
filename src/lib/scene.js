@@ -28,13 +28,22 @@ export const createScene = async (el, width,height, count, messageStore, imageUr
 
 
     window.addEventListener('resize', (e) => {
+      let canvasWidth,canvasHeight;
+    /*  if(this.isFullScreen){
+        canvasWidth = screen.width;
+        canvasHeight = screen.height;
 
-        let canvas = document.getElementById('app-canvas');
-        width = window.innerWidth;
-        height = window.innerHeight;
+    } else {*/
+      let canvas = document.getElementById('app-canvas');
+
+        canvasWidth = canvas.clientWidth;
+        canvasHeight = canvas.clientHeight;                     
+
+    //};
+
         let payload = { method: 'resize',
-            height: height,
-            width: width
+            height: canvasWidth,
+            width: canvasHeight
           }
         canvasWorker.postMessage(payload);   
       });    
