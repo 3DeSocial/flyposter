@@ -1,7 +1,7 @@
 import * as THREE from 'https://unpkg.com/three@0.152.2/build/three.module.js';
 import { VRButton } from 'https://unpkg.com/three@0.152.2/examples/jsm/webxr/VRButton.js';
 
-let renderer, roadSegment1, roadSegment2, tunnelTexture, movementSpeed;
+let renderer, roadSegment1, roadSegment2, tunnelTexture, movementSpeed,clientWidth,clientHeight;
 let camera, scene, roadGroup = new THREE.Group(), cubes =[];
 let roadSegments =[];
 
@@ -46,7 +46,8 @@ self.onmessage = function(event) {
 };
 
 const handleTouch = (payload)=>{
-  console.log(payload);
+
+  raycastFromCamera(payload.clientX,payload.clientY);
 }
 const moveCamera = (payload)=>{
   let speed = 0.5;
@@ -85,10 +86,78 @@ const moveCamera = (payload)=>{
   }
 }
 
+const raycastFromCamera = (screenX, screenY) => {
+  if(!renderer.domElement){  
+    console.log('no domelement')
+    return false;
+  }
+  // Normalized device coordinates
+  var ndcX = (screenX / clientWidth) * 2 - 1;
+  var ndcY = -(screenY / clientHeight) * 2 + 1;
+  console.log('ndcX: ',ndcX,'ndcY: ',ndcY);
+  // Create a Vector3 for the touch point in NDC
+  var touchPoint = new THREE.Vector3(ndcX, ndcY, 0.5); // z = 0.5 important!
+console.log(touchPoint);
+  // Unproject the touch point into world space
+  touchPoint.unproject(camera);
+
+  // Raycaster
+  var raycaster = new THREE.Raycaster();
+
+  // Set the Raycaster to start at the camera and pass through the touch point
+  raycaster.set(camera.position, touchPoint.sub(camera.position).normalize());
+   // Create an arrow helper to visualize the ray
+   var arrowHelper = new THREE.ArrowHelper(raycaster.ray.direction, raycaster.ray.origin, 100, 0xff0000);
+   scene.add(arrowHelper);
+
+   console.log(raycaster.ray.direction, raycaster.ray.origin);
+
+
+  // Get the list of objects the ray intersected
+  var intersects = raycaster.intersectObjects(roadSegment1.children, true);
+  if(intersects.length===0){
+    intersects = raycaster.intersectObjects(roadSegment2.children, true);
+
+  }
+
+if(intersects.length){
+  console.log('hit something');
+  console.log(intersects[0]);
+  checkAndRemoveFromGroup(intersects[0].object);
+};
+  return intersects;
+}
+
+const checkAndRemoveFromGroup = (intersectedObject) => {
+  // Check if the intersected object has a parent
+  if (intersectedObject.parent) {
+      // Check if the parent is a group
+      if (intersectedObject.parent.type='Group') {
+          // Store the parent group
+          var parentGroup = intersectedObject.parent;
+        
+          // Remove the object from the group
+          parentGroup.remove(intersectedObject);
+
+          // The object's position is now relative to the group, so we need to adjust it to be relative to the scene
+          intersectedObject.position.add(parentGroup.position);
+
+          // Add the object directly to the scene
+          scene.add(intersectedObject);
+          console.log('added to scene: ',intersectedObject);
+      }
+  } else {
+    console.log('thing has no parent')
+    console.log(intersectedObject)
+  }
+}
+
 const initCanvas=(d)=>{
     const canvas = d.canvas;
     const innerWidth = d.width;
     const innerHeight = d.height;
+    clientWidth = innerWidth;
+    clientHeight = innerHeight;    
     const images = d.images;
 //const devicePixelRatio = d.devicePixelRatio;
     renderer = new THREE.WebGLRenderer( { canvas:canvas } );
@@ -378,6 +447,8 @@ const updateRendererSize = (d)=> {
   }
   const width = d.width;
   const height = d.height;
+  clientWidth = width;
+  clientHeight = height;
   const needResize = canvas.width !== width || canvas.height !== height;
   if (needResize) {
     camera.aspect =width /height;
