@@ -3,7 +3,7 @@
 	import { writable } from 'svelte/store';	
 	import { createScene } from '../lib/scene.js';
 	
-	let messageStore = writable("Loading...");
+	let messageStore = writable("");
 	let width = window.innerWidth;
   let height = window.innerHeight;
 
@@ -14,9 +14,12 @@
 		//audioElement.play();
 		createScene(el, width, height, 200, messageStore);
 	});
-	let audioSource = '/melodic-techno-03-extended-version-moogify-9867.mp3';
+	//let audioSource = '/melodic-techno-03-extended-version-moogify-9867.mp3';
 
-
+	function handleOKClick() {
+		messageStore.set('');
+    // You can add more code here to handle the button click
+  	}
 	
 	
 </script>
@@ -37,9 +40,10 @@
 <div class="space-ctr" id="space-ctr">
 	<div style="display:none;" class="statusbar"></div>
 	<canvas v bind:this={el} id="app-canvas" style="width:100%; height: 100%;"></canvas>
+	{#if $messageStore}	
 		<div id="hud-content">
-			{#if $messageStore}
-			<div id="hud-text">{$messageStore}</div>
-		  {/if}
+		<div id="hud-text">{$messageStore}</div>
+		<div id="hud-buttons"><button on:click={handleOKClick} style="float:right; padding: 1em;" id="dismiss">OK</button></div>
 		</div>
+	{/if}		
 </div>

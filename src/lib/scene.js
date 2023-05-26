@@ -46,8 +46,6 @@ export const createScene = async (el, width,height, count, messageStore) => {
         let data = message.data;
         switch(data.method){
           case 'hudtext':
-            console.log('hudtext');
-            console.log(data);
             messageStore.set(data.description);
           break;
           default:
@@ -129,37 +127,61 @@ const dispatchTouch = (event) =>{
     return;
   }
 
-  const touch = event.changedTouches[0];
+  switch(event.target.id){
+  case 'hud-content':
+  break;
+  case 'dismiss':
+    canvasWorker.postMessage({
+      method: 'event',
+      payload: {type:'dismiss'}});
+  break;
+  default:
+    const touch = event.changedTouches[0];
 
 
-  canvasWorker.postMessage({
-    method: 'event',
-    payload: {
-        type: event.type,
-        clientX: touch.clientX,
-        clientY: touch.clientY,
-        pageX: touch.pageX,
-        pageY: touch.pageY,
-        radiusX: touch.radiusX,
-        radiusY: touch.radiusY,
-        screenX: touch.screenX,
-        screenY: touch.screenY             
-    },
-  });
+    canvasWorker.postMessage({
+      method: 'event',
+      payload: {
+          type: event.type,
+          clientX: touch.clientX,
+          clientY: touch.clientY,
+          pageX: touch.pageX,
+          pageY: touch.pageY,
+          radiusX: touch.radiusX,
+          radiusY: touch.radiusY,
+          screenX: touch.screenX,
+          screenY: touch.screenY             
+      },
+    });    
+  break;
+}
+
 }
 
 const dispatchMouse = (event) =>{
   if(!canvasWorker){
     return;
   }
-  canvasWorker.postMessage({
-    method: 'event',
-    payload: {
-        type: event.type,
-        clientX: event.clientX,
-        clientY: event.clientY,
-    },
-  });
+
+  switch(event.target.id){
+    case 'hud-content':
+    break;
+    case 'dismiss':
+      canvasWorker.postMessage({
+        method: 'event',
+        payload: {type:'dismiss'}});
+    break;
+    default:
+      canvasWorker.postMessage({
+        method: 'event',
+        payload: {
+            type: event.type,
+            clientX: event.clientX,
+            clientY: event.clientY,
+        },
+      });
+    break;
+  }
 }
 const getPostImages = async(count)=>{
   let images = [];

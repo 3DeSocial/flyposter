@@ -5,6 +5,8 @@ import { Text } from 'troika-three-text';
 let renderer, roadSegment1, roadSegment2, tunnelTexture, movementSpeed,clientWidth,clientHeight;
 let camera,cameraGroup,scene, roadGroup = new THREE.Group(), cubes =[];
 let roadSegments =[];
+let centerPosition = new THREE.Vector3(0,2,8);
+let selectedMesh = null;
 
 self.onmessage = function(event) {
     let payload = event.data.payload;
@@ -18,7 +20,10 @@ self.onmessage = function(event) {
         break;
         case 'add_cube':
           addCube(event.data);
-        break;        
+        break;
+        case 'dismiss':
+          dismissCurrentCube();
+        break;            
         case 'resize':
           updateRendererSize(event.data);
         break;
@@ -87,6 +92,17 @@ const moveCamera = (payload)=>{
   }
 }
 
+const dismissCurrentCube =()=>{
+  if(!selectedMesh){
+    return;
+  }
+  // Store the parent group
+  var parentGroup = selectedMesh.parent;
+
+  // Remove the object from the group
+  parentGroup.remove(selectedMesh);
+
+}
 const raycastFromCamera = (screenX, screenY) => {
   if(!renderer.domElement){  
     return false;
@@ -114,6 +130,7 @@ const raycastFromCamera = (screenX, screenY) => {
   }
 
 if(intersects.length){
+  dismissCurrentCube();
   checkAndRemoveFromGroup(intersects[0].object);
 };
   return intersects;
@@ -135,8 +152,11 @@ const checkAndRemoveFromGroup = (intersectedObject) => {
 
           // Add the object directly to the scene
           scene.add(intersectedObject);
-          console.log('intersectedObject');
-          console.log(intersectedObject);
+          selectedMesh = intersectedObject;
+          centerPosition.x = camera.position.x;
+          centerPosition.y = camera.position.y+4;
+          centerPosition.z = camera.position.z-20;
+
           displayPost({description:intersectedObject.userData.imageData.description,
                       user:intersectedObject.userData.imageData.user,
                       userDesc:intersectedObject.userData.imageData.description,
@@ -233,19 +253,14 @@ const animate = function () {
    roadSegment2.position.z = roadSegment1.position.z - 1000;
  }
  
+ if (selectedMesh){
+    // Generate a new target position if the camera is close to the current target
+    if (selectedMesh.position.distanceTo(centerPosition) > 1) {
+      // Move the selectedMesh towards the target position
+      selectedMesh.position.lerp(centerPosition, cameraSpeed);
+    }
+}
 
-  // Generate a new target position if the camera is close to the current target
-  /*if (camera.position.distanceTo(targetPosition) < 1) {
-    targetPosition.x = (Math.random() - 0.5) * roadWidth;
-    targetPosition.y = (Math.random() - 0.5) * roadWidth;
-  }
-
-  // Move the camera towards the target position
-  camera.position.lerp(targetPosition, cameraSpeed);
-
-  // Update the camera's direction
-  camera.lookAt(new THREE.Vector3(0, 0, camera.position.z - 100));
-*/
    // Update the time uniform of the shader material
  // material.uniforms.time.value = clock.getElapsedTime();
 

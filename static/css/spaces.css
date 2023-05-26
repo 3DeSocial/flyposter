@@ -126,19 +126,20 @@ button#VRButton {
 
 #hud-content {
   z-index: 100;
-  position: absolute;
-  width: 60%;
+  position: fixed; /* Changed from absolute to fixed */
+  width: 80%;
   padding: 10px;
-  display: none;
   color: #FFF;
-  top: 50%;
+  bottom: 20px; /* Added this line */
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translateX(-50%); /* Changed from translate(-50%, -50%) to translateX(-50%) */
   line-height: 1.5em;
   font-size: 16px;
   background-color: #000;
   opacity: 0.8;
-
+  max-height: 90%;
+  overflow-y: auto;
+  
 }
 #hud-text h4 {
   display: block;
