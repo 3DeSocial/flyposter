@@ -1,7 +1,9 @@
 <script>
 	import { onMount } from 'svelte';
+	import { writable } from 'svelte/store';	
 	import { createScene } from '../lib/scene.js';
-
+	
+	let messageStore = writable("Loading...");
 	let width = window.innerWidth;
   let height = window.innerHeight;
 
@@ -10,7 +12,7 @@
 	onMount ((count) => {
 		//const audioElement = document.getElementById('audioElement');
 		//audioElement.play();
-		createScene(el, width, height, 200);
+		createScene(el, width, height, 200, messageStore);
 	});
 	let audioSource = '/melodic-techno-03-extended-version-moogify-9867.mp3';
 
@@ -36,7 +38,8 @@
 	<div style="display:none;" class="statusbar"></div>
 	<canvas v bind:this={el} id="app-canvas" style="width:100%; height: 100%;"></canvas>
 		<div id="hud-content">
-			<div id="hud-text"></div>
-
+			{#if $messageStore}
+			<div id="hud-text">{$messageStore}</div>
+		  {/if}
 		</div>
 </div>

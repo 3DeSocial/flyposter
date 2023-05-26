@@ -5,7 +5,7 @@ const workerURL = new URL('./workers/canvasWorker.js', import.meta.url);
 const canvasWorker = new Worker(workerURL, { type: "module" });
 
 
-export const createScene = async (el, width,height, count) => {
+export const createScene = async (el, width,height, count, messageStore) => {
 
 
     let images = await getPostImages(count);
@@ -26,6 +26,7 @@ export const createScene = async (el, width,height, count) => {
     canvasWorker.postMessage(payload, [offscreen]);
 
 
+
     window.addEventListener('resize', (e) => {
 
         let canvas = document.getElementById('app-canvas');
@@ -40,7 +41,21 @@ export const createScene = async (el, width,height, count) => {
       window.dispatchEvent(new Event('resize'));      
     
       initController();
-      
+       
+      canvasWorker.onmessage = (message)=>{
+        let data = message.data;
+        switch(data.method){
+          case 'hudtext':
+            console.log('hudtext');
+            console.log(data);
+            messageStore.set(data.description);
+          break;
+          default:
+            console.log('unknown message');
+            console.log(data);     
+          break;
+        }
+      }   
 }
 
 const initController =() =>{
@@ -73,7 +88,8 @@ const initController =() =>{
   });  
 
   // Register mouse action for the left mouse button (button 0)
-  inputHandler.registerMouseAction('mousedown', (mousePosition) => {
+  inputHandler.registerMouseAction('mousedown', (event) => {
+    dispatchMouse(event);    
   });
 
   // Register mouse action for the left mouse button (button 0)

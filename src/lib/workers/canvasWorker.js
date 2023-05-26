@@ -135,16 +135,20 @@ const checkAndRemoveFromGroup = (intersectedObject) => {
 
           // Add the object directly to the scene
           scene.add(intersectedObject);
-          displayPost({description:intersectedObject.userData.description,
-                      user:intersectedObject.userData.user,
-                      userDesc:intersectedObject.userData.description,
-                      userProfileImgUrl:intersectedObject.userData.userProfileImgUrl})
+          console.log('intersectedObject');
+          console.log(intersectedObject);
+          displayPost({description:intersectedObject.userData.imageData.description,
+                      user:intersectedObject.userData.imageData.user,
+                      userDesc:intersectedObject.userData.imageData.description,
+                      userProfileImgUrl:intersectedObject.userData.imageData.userProfileImgUrl})
       }
   }
 }
 
 const displayPost = (postData) =>{
-    let minDistance = 5;
+  postData.method = 'hudtext';
+  self.postMessage(postData);
+  /*  let minDistance = 5;
     let inputText = postData.description;
     // Remove the old text from the group if it exists
     let oldText = cameraGroup.getObjectByName('hudText');
@@ -165,7 +169,7 @@ const displayPost = (postData) =>{
   
     // Update the text layout
     text.sync();
-  
+  */
   
 }
 const initCanvas=(d)=>{
