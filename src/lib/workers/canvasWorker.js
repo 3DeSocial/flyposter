@@ -204,10 +204,6 @@ const addRoadSegments = async(images)=> {
     addCubesToSegments(images).then((textures) => {
       positionCubes(textures);
       resolve();
-    })
-    .catch((error) => {
-      console.error('There was an error loading the images:', error);
-      resolve()
     });  
 
     })
