@@ -3,6 +3,8 @@ import {InputController, InputHandler} from '$lib/classes/D3D_InputController.mj
 let workers =[], inputHandler, inputController;
 const workerURL = new URL('./workers/canvasWorker.js', import.meta.url);
 const canvasWorker = new Worker(workerURL, { type: "module" });
+
+
 export const createScene = async (el, width,height, count) => {
 
 
@@ -38,11 +40,10 @@ export const createScene = async (el, width,height, count) => {
       window.dispatchEvent(new Event('resize'));      
     
       initController();
+      
 }
 
 const initController =() =>{
-
-
 
   inputHandler = new InputHandler();
   inputController = new InputController({inputHandler: inputHandler});
@@ -113,8 +114,7 @@ const dispatchTouch = (event) =>{
   }
 
   const touch = event.changedTouches[0];
-  console.log('touch event: ',event);
-  console.log('touch event: ',touch);
+
 
   canvasWorker.postMessage({
     method: 'event',

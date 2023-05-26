@@ -1,8 +1,9 @@
 import * as THREE from 'https://unpkg.com/three@0.152.2/build/three.module.js';
 import { VRButton } from 'https://unpkg.com/three@0.152.2/examples/jsm/webxr/VRButton.js';
+import { Text } from 'troika-three-text';
 
 let renderer, roadSegment1, roadSegment2, tunnelTexture, movementSpeed,clientWidth,clientHeight;
-let camera, scene, roadGroup = new THREE.Group(), cubes =[];
+let camera,cameraGroup,scene, roadGroup = new THREE.Group(), cubes =[];
 let roadSegments =[];
 
 self.onmessage = function(event) {
@@ -53,26 +54,26 @@ const moveCamera = (payload)=>{
   let speed = 0.5;
   switch(payload.code){
     case 'KeyW':
-      if(camera.position.y<40){
-        camera.position.y+=speed;
+      if(cameraGroup.position.y<40){
+        cameraGroup.position.y+=speed;
       }
     break;
     case 'KeyS':
-      if(camera.position.y>-40){
+      if(cameraGroup.position.y>-40){
 
-      camera.position.y-=speed;
+      cameraGroup.position.y-=speed;
     }      
     break;
     case 'KeyA':
-      if(camera.position.x>-40){
+      if(cameraGroup.position.x>-40){
 
-      camera.position.x-=speed;
+      cameraGroup.position.x-=speed;
     }      
     break;
     case 'KeyD':
-      if(camera.position.x<40){
+      if(cameraGroup.position.x<40){
 
-      camera.position.x+=speed;      
+      cameraGroup.position.x+=speed;      
     }      
     break;
     case 'KeyR':
@@ -88,16 +89,13 @@ const moveCamera = (payload)=>{
 
 const raycastFromCamera = (screenX, screenY) => {
   if(!renderer.domElement){  
-    console.log('no domelement')
     return false;
   }
   // Normalized device coordinates
   var ndcX = (screenX / clientWidth) * 2 - 1;
   var ndcY = -(screenY / clientHeight) * 2 + 1;
-  console.log('ndcX: ',ndcX,'ndcY: ',ndcY);
   // Create a Vector3 for the touch point in NDC
   var touchPoint = new THREE.Vector3(ndcX, ndcY, 0.5); // z = 0.5 important!
-console.log(touchPoint);
   // Unproject the touch point into world space
   touchPoint.unproject(camera);
 
@@ -106,11 +104,6 @@ console.log(touchPoint);
 
   // Set the Raycaster to start at the camera and pass through the touch point
   raycaster.set(camera.position, touchPoint.sub(camera.position).normalize());
-   // Create an arrow helper to visualize the ray
-   var arrowHelper = new THREE.ArrowHelper(raycaster.ray.direction, raycaster.ray.origin, 100, 0xff0000);
-   scene.add(arrowHelper);
-
-   console.log(raycaster.ray.direction, raycaster.ray.origin);
 
 
   // Get the list of objects the ray intersected
@@ -121,8 +114,6 @@ console.log(touchPoint);
   }
 
 if(intersects.length){
-  console.log('hit something');
-  console.log(intersects[0]);
   checkAndRemoveFromGroup(intersects[0].object);
 };
   return intersects;
@@ -144,14 +135,39 @@ const checkAndRemoveFromGroup = (intersectedObject) => {
 
           // Add the object directly to the scene
           scene.add(intersectedObject);
-          console.log('added to scene: ',intersectedObject);
+          displayPost({description:intersectedObject.userData.description,
+                      user:intersectedObject.userData.user,
+                      userDesc:intersectedObject.userData.description,
+                      userProfileImgUrl:intersectedObject.userData.userProfileImgUrl})
       }
-  } else {
-    console.log('thing has no parent')
-    console.log(intersectedObject)
   }
 }
 
+const displayPost = (postData) =>{
+    let minDistance = 5;
+    let inputText = postData.description;
+    // Remove the old text from the group if it exists
+    let oldText = cameraGroup.getObjectByName('hudText');
+    if (oldText) {
+      cameraGroup.remove(oldText);
+    }
+  
+    // Create a new Text instance and set its properties
+    let text = new Text();
+    text.name = 'hudText'; // Set a name so we can find it later
+    text.text = inputText;
+    text.fontSize = 0.1;
+    text.color = 0xff0000;
+    text.position.set(0, 0, minDistance); // Position the text in front of the camera
+  
+    // Add the text to the group
+    cameraGroup.add(text);
+  
+    // Update the text layout
+    text.sync();
+  
+  
+}
 const initCanvas=(d)=>{
     const canvas = d.canvas;
     const innerWidth = d.width;
@@ -167,11 +183,13 @@ const initCanvas=(d)=>{
 //		renderer.xr.enabled = true;    
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
+    cameraGroup = new THREE.Group();
+    cameraGroup.add(camera);
     createTunnel();
     // Position camera
 // Position camera
-camera.position.y = 1.8; // Height similar to a car
-camera.position.z = 0; // Start at the beginning of the road
+cameraGroup.position.y = 1.8; // Height similar to a car
+cameraGroup.position.z = 0; // Start at the beginning of the road
 
     addRoadSegments(images).then(()=>{
 // Define the target position for the camera
@@ -279,8 +297,8 @@ const addRoadSegments = async(images)=> {
         roadSegments.push(roadSegment);
     }
 
-    addCubesToSegments(images).then((textures) => {
-      positionCubes(textures);
+    addCubesToSegments(images).then((images) => {
+      positionCubes(images);
       resolve();
     });  
 
@@ -297,7 +315,7 @@ const addCubesToSegments = (images) => {
   return Promise.all(promises);
 };
 
-const positionCubes = (textures)=>{
+const positionCubes = (images)=>{
   let segment = 0;
   var cubeSize = 8; // Size of the cube
   var minDistance = 10; // Minimum distance between cubes  
@@ -307,10 +325,10 @@ const positionCubes = (textures)=>{
   var grid = new Array(Math.ceil(roadWidth / gridSize) * Math.ceil(roadLength / gridSize)).fill(false);
   var maxAttempts = 100; // Maximum number of attempts to find an unoccupied cell
   
-  textures.forEach((texture, idx)=>{
+  images.forEach((image, idx)=>{
     let roadSegment = roadSegments[segment];
     segment = (segment===0)?1:0;
-      let cube = createCube(texture, cubeSize);
+      let cube = createCube(image, cubeSize);
       if(cube){
       var cellIndex;
       var attempts = 0;
@@ -332,7 +350,7 @@ const positionCubes = (textures)=>{
           grid[cellIndex] = true;
           var randomInt = Math.floor(Math.random() * 2) + 1;
 
-          cube.userData = {direction: randomInt};
+          cube.userData.direction = randomInt;
           cubes.push(cube);
           roadSegment.add(cube);
         }
@@ -341,9 +359,11 @@ const positionCubes = (textures)=>{
   })
 }
 
-const createCube = (texture,cubeSize)=>{
-  let imgTexture = texture[0];
-  let userTexture = texture[1];
+const createCube = (image,cubeSize)=>{
+  let imgTexture = image[0];
+  let userTexture = image[1];
+  let imageData = image[2];
+
   if(!imgTexture){
     return false;
   };
@@ -383,8 +403,9 @@ const createCube = (texture,cubeSize)=>{
           cubeMaterial  // Back side
         ];
         
-        return new THREE.Mesh(cubeGeometry, cubeMaterials);
-
+        let cube = new THREE.Mesh(cubeGeometry, cubeMaterials);
+        cube.userData.imageData = imageData;
+        return cube;
 }
 
 const loadImage = async (image)=>{
@@ -399,7 +420,7 @@ const loadImage = async (image)=>{
   let userBitmap = await createImageBitmap(userBlob);
   var userTexture = new THREE.Texture(userBitmap);
   userTexture.needsUpdate = true;  
-  return [imgTexture, userTexture];
+  return [imgTexture, userTexture, image];
 }
 
 const createTunnel =async () =>{
