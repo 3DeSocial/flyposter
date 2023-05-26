@@ -1,13 +1,13 @@
 import { getUsersStateless, getPostsStateless, buildProfilePictureUrl } from 'deso-protocol';
 import {InputController, InputHandler} from '$lib/classes/D3D_InputController.mjs';
-let workers =[], inputHandler, inputController, canvasWorker;
+let workers =[], inputHandler, inputController;
 const workerURL = new URL('./workers/canvasWorker.js', import.meta.url);
-
+const canvasWorker = new Worker(workerURL, { type: "module" });
 export const createScene = async (el, width,height, count) => {
 
 
     let images = await getPostImages(count);
-    canvasWorker = new Worker(workerURL, { type: "module" });
+
     const offscreen = el.transferControlToOffscreen();
 
     
