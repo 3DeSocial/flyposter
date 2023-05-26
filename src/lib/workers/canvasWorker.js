@@ -212,14 +212,15 @@ const addRoadSegments = async(images)=> {
     })
 }
 
-const addCubesToSegments = (images) =>{
+const addCubesToSegments = (images) => {
   let promises = images.map((image) => {
-    return loadImage(image)
-  });
+    if (!image.url.toLowerCase().endsWith('.gif')) {
+      return loadImage(image);
+    }
+  }).filter(Boolean);
 
-  return Promise.all(promises)
-
-}
+  return Promise.all(promises);
+};
 const positionCubes = (textures)=>{
   let segment = 0;
   var cubeSize = 8; // Size of the cube
