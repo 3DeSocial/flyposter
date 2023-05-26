@@ -5,7 +5,7 @@ const workerURL = new URL('./workers/canvasWorker.js', import.meta.url);
 const canvasWorker = new Worker(workerURL, { type: "module" });
 
 
-export const createScene = async (el, width,height, count, messageStore) => {
+export const createScene = async (el, width,height, count, messageStore, imageUrlStore) => {
 
 
     let images = await getPostImages(count);
@@ -47,6 +47,7 @@ export const createScene = async (el, width,height, count, messageStore) => {
         switch(data.method){
           case 'hudtext':
             messageStore.set(data.description);
+            imageUrlStore.set(data.userProfileImgUrl);
           break;
           default:
             console.log('unknown message');

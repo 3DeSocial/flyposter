@@ -368,10 +368,14 @@ form.nft-3d-overlay {
   padding: 0.25em 0.5em;
 }
 
-@media (min-width: 640px) {
+
+@media (max-width: 640px) {
   #hud-content {
     width: 100%;
   }
+}
+
+@media (min-width: 640px) {
   #diamond-count.d3d-btn-top{
     color: #f00;
     right: 8em;
