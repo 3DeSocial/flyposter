@@ -139,7 +139,8 @@ button#VRButton {
   opacity: 0.8;
   max-height: 90%;
   overflow-y: auto;
-  
+  word-wrap: break-word;
+
 }
 #hud-text h4 {
   display: block;
@@ -147,9 +148,8 @@ button#VRButton {
   word-wrap: break-word;
 }
 #hud-text {
-        display: flex;
-    flex-direction: row;
-  overflow-y: auto;
+
+
 }
 #hud-text dd,
 #hud-text dt{

@@ -44,7 +44,7 @@
 	<canvas v bind:this={el} id="app-canvas" style="width:100%; height: 100%;"></canvas>
 	{#if $messageStore}	
 		<div id="hud-content">
-		<div id="hud-text"><img style="max-width:6em; padding: 1em;" src={$imageUrl} alt="Image">{$messageStore}</div>
+		<img style="max-width:6em; padding: 1em;float: left;" src={$imageUrl} alt="Image">{$messageStore}
 		<div id="hud-buttons"><button on:click={handleOKClick} style="float:right; padding: 1em;" id="dismiss">OK</button></div>
 		</div>
 	{/if}		
