@@ -233,7 +233,6 @@ const initCanvas=(d)=>{
     camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
     cameraGroup = new THREE.Group();
     scene.add(camera);
-    camera.lookAt(new THREE.Vector3(0, 0, camera.position.z - 1000));
     createTunnel();
     // Position camera
 // Position camera
@@ -252,8 +251,9 @@ const startAnimation = () =>{
 
   var clock = new THREE.Clock();
   camera.lookAt(new THREE.Vector3(0, 0, camera.position.z - 1000));
-
+let start = false;
 const animate = function () {
+
   cubes.forEach((cube)=>{
     // cube.rotation.x += 0.01;
     switch(cube.userData.direction){
@@ -309,7 +309,10 @@ const animate = function () {
 
    // Update the time uniform of the shader material
  // material.uniforms.time.value = clock.getElapsedTime();
-
+if(start===false){
+  camera.lookAt(new THREE.Vector3(0, 0, camera.position.z - 1000));
+  start = true;
+}
   renderer.render(scene, camera);
   requestAnimationFrame(animate);
 };  
