@@ -310,7 +310,7 @@ const animate = function () {
    // Update the time uniform of the shader material
  // material.uniforms.time.value = clock.getElapsedTime();
   camera.lookAt(new THREE.Vector3(0, 0, camera.position.z - 1000));
-}
+
   renderer.render(scene, camera);
   requestAnimationFrame(animate);
 };  
