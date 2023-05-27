@@ -83,7 +83,7 @@
 	{#if $readyStore===true}	
 	<h2>Login</h2>
 	<button id="guest" on:click={handleGuestClick}>Guest</button>
-	<button id="login" on:click={handleLoginClick}>Login With DeSo</button>	
+	<!--<button id="login" on:click={handleLoginClick}>Login With DeSo</button>	-->
 
 	{:else}
 	<h1>Please Wait...</h1>
