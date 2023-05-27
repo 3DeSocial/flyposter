@@ -126,7 +126,7 @@ const dispatchTouch = (event) =>{
   if(!canvasWorker){
     return;
   }
-
+console.log(event.target.id);
   switch(event.target.id){
   case 'hud-content':
   break;

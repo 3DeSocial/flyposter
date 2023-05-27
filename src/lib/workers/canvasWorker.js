@@ -223,9 +223,10 @@ var roadWidth = 40; // Width of the road
 // Define the speed of the camera movement
 var cameraSpeed = 0.01;
 var rotationSpeed =  0.01;
-movementSpeed = 0.5;
+movementSpeed = 20;
 var tunnelSpeed = movementSpeed/100;
 
+var clock = new THREE.Clock();
 
 const animate = function () {
   cubes.forEach((cube)=>{
@@ -239,11 +240,13 @@ const animate = function () {
     //  cube.rotation.z += 0.01;            
   })
   
+  var elapsedTime = clock.getDelta();
+
  // Move road segments
- roadSegment1.position.z += movementSpeed;
- roadSegment2.position.z += movementSpeed;
- tunnelTexture.offset.y -= tunnelSpeed;
- tunnelTexture.offset.x -= (tunnelSpeed/2);
+ roadSegment1.position.z += movementSpeed * elapsedTime;
+ roadSegment2.position.z += movementSpeed * elapsedTime;
+ tunnelTexture.offset.y -= tunnelSpeed * elapsedTime;
+ tunnelTexture.offset.x -= (tunnelSpeed/2) * elapsedTime;
 
   // Loop road segments
  if (roadSegment1.position.z > camera.position.z + 1000) {
