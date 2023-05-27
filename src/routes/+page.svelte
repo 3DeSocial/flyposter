@@ -95,11 +95,11 @@
 	<div style="display:none;" class="statusbar"></div>
 	{#if loading===false}	
 	{#if $currentUserStore != null}	
-	<div id="control-btns"><ul>
+	<!--<div id="control-btns"><ul>
 			<li><img id="heart" src="/images/heart.png"/></li>
-			<!--<li><img id="diamond" src="/images/diamond.png"/></li>-->
+			<li><img id="diamond" src="/images/diamond.png"/></li>
 		</ul>
-	</div>
+	</div>-->
 	{/if}
 	{/if}
 	<canvas v bind:this={el} id="app-canvas" style="width:100%; height: 100%;"></canvas>
