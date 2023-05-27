@@ -232,13 +232,13 @@ const initCanvas=(d)=>{
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
     cameraGroup = new THREE.Group();
-    cameraGroup.add(camera);
+    scene.add(camera);
     createTunnel();
     // Position camera
 // Position camera
 cameraGroup.position.y = 1.8; // Height similar to a car
 cameraGroup.position.z = 0; // Start at the beginning of the road
-
+//scene.add(cameraGroup)
     addRoadSegments(images).then(()=>{
       self.postMessage({method:'ready'})
        
@@ -303,7 +303,7 @@ const animate = function () {
       selectedMesh.position.lerp(centerPosition, cameraSpeed);
     }
 }
-camera.lookAt(new THREE.Vector3(0, 0, camera.position.z - 100));
+
    // Update the time uniform of the shader material
  // material.uniforms.time.value = clock.getElapsedTime();
 
@@ -488,16 +488,22 @@ const loadImage = async (image)=>{
     imgTexture = new THREE.Texture(bitmap);
     imgTexture.needsUpdate = true;
   }
-  var userResponse = await fetch('/api/image-proxy?url='+image.userProfileImgUrl);
-  var userBlob = await userResponse.blob();
-  let userBitmap = await createImageBitmap(userBlob);
-  var userTexture = new THREE.Texture(userBitmap);
-  userTexture.needsUpdate = true;  
-  if(!image.url){
-    imgTexture = new THREE.Texture(userBitmap);
-    imgTexture.needsUpdate = true;
+  try {
+    var userResponse = await fetch('/api/image-proxy?url='+image.userProfileImgUrl);
+    var userBlob = await userResponse.blob();
+    let userBitmap = await createImageBitmap(userBlob);
+    var userTexture = new THREE.Texture(userBitmap);
+    userTexture.needsUpdate = true;  
+    if(!image.url){
+      imgTexture = new THREE.Texture(userBitmap);
+      imgTexture.needsUpdate = true;
+    }
+    return [imgTexture, userTexture, image];
+  } catch (error) {
+    console.log(error);
+    return false;
   }
-  return [imgTexture, userTexture, image];
+ 
 }
 
 const createTunnel =async () =>{
@@ -511,7 +517,7 @@ const createTunnel =async () =>{
                   '/textures/alien-planet.png',
                   '/textures/flames1.png']
 
-  let noTextures = textures.length-1;
+  let noTextures = textures.length;
   var randomInt = Math.floor(Math.random() * noTextures);
   let textureUrl = textures[randomInt]
   var response = await fetch(textureUrl);
