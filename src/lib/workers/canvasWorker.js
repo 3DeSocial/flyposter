@@ -2,13 +2,14 @@ import * as THREE from 'https://unpkg.com/three@0.152.2/build/three.module.js';
 import { VRButton } from 'https://unpkg.com/three@0.152.2/examples/jsm/webxr/VRButton.js';
 
 let renderer, roadSegment1, roadSegment2, tunnelTexture, movementSpeed,clientWidth,clientHeight;
-let camera,cameraGroup,scene, roadGroup = new THREE.Group(), cubes =[];
+let camera,cameraGroup,scene, roadGroup = new THREE.Group(), cubes =[], updatables = [];
 let roadSegments =[];
 let centerPosition = new THREE.Vector3(0,2,8);
 let selectedMesh = null;
 
 self.onmessage = function(event) {
     let payload = event.data.payload;
+    console.log('event.data.method: ',event.data.method);
     switch(event.data.method){
         case 'canvas':
           
@@ -20,14 +21,15 @@ self.onmessage = function(event) {
         case 'add_cube':
           addCube(event.data);
         break;
-        case 'dismiss':
-          dismissCurrentCube();
-        break;            
+        
         case 'resize':
           updateRendererSize(event.data);
         break;
         case 'event':
          switch(payload.type){
+          case 'dismiss':
+            dismissCurrentCube();
+          break;    
           case 'mousemove':
           break;
           case 'keydown':
@@ -92,7 +94,11 @@ const moveCamera = (payload)=>{
 }
 
 const dismissCurrentCube =()=>{
+  console.log('dismissCurrentCube')
+
   if(!selectedMesh){
+    console.log('no mesh')
+
     return;
   }
   // Store the parent group
@@ -100,8 +106,21 @@ const dismissCurrentCube =()=>{
 
   // Remove the object from the group
   parentGroup.remove(selectedMesh);
-
+          
+          // The object's position is now relative to the group, so we need to adjust it to be relative to the scene
+          selectedMesh.position.add(parentGroup.position);
+          scene.add(selectedMesh);
+          console.log('readded')
+  let target = getRandomCoordinates(4,400);
+  updatables.push({mesh:selectedMesh,targetVector:target});
 }
+
+function getRandomCoordinates(min, max) {
+  let x = Math.random() * (max - min) + min;
+  let y = Math.random() * (max - min) + min;
+  return new THREE.Vector3(x, y, -250);
+}
+
 const raycastFromCamera = (screenX, screenY) => {
   if(!renderer.domElement){  
     return false;
@@ -241,6 +260,18 @@ const animate = function () {
   })
   
   var elapsedTime = clock.getDelta();
+
+  for (let i = updatables.length - 1; i >= 0; i--) { 
+    const {mesh, targetVector} = updatables[i];
+    if(mesh.position){
+    if (mesh.position.distanceTo(targetVector) > 1) {
+      // Move the selectedMesh towards the target position
+      mesh.position.lerp(targetVector, cameraSpeed);
+    } else {
+      updatables.splice(i, 1);
+    }
+  }
+  }
 
  // Move road segments
  roadSegment1.position.z += movementSpeed * elapsedTime;
