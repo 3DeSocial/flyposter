@@ -233,6 +233,7 @@ const initCanvas=(d)=>{
     camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
     cameraGroup = new THREE.Group();
     scene.add(camera);
+    camera.lookAt(new THREE.Vector3(0, 0, camera.position.z - 1000));
     createTunnel();
     // Position camera
 // Position camera
