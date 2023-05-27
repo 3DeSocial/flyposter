@@ -251,6 +251,8 @@ cameraGroup.position.z = 0; // Start at the beginning of the road
 const startAnimation = () =>{
 
   var clock = new THREE.Clock();
+  camera.lookAt(new THREE.Vector3(0, 0, camera.position.z - 1000));
+
 const animate = function () {
   cubes.forEach((cube)=>{
     // cube.rotation.x += 0.01;
