@@ -1,35 +1,47 @@
 import * as THREE from 'https://unpkg.com/three@0.152.2/build/three.module.js';
 import { VRButton } from 'https://unpkg.com/three@0.152.2/examples/jsm/webxr/VRButton.js';
 
-let renderer, roadSegment1, roadSegment2, tunnelTexture, movementSpeed,clientWidth,clientHeight;
-let camera,cameraGroup,scene, roadGroup = new THREE.Group(), cubes =[], updatables = [];
+let renderer,scene,camera, roadSegment1, roadSegment2, tunnelTexture, movementSpeed,clientWidth,clientHeight;
+let cameraGroup, roadGroup = new THREE.Group(), cubes =[], updatables = [];
 let roadSegments =[];
 let centerPosition = new THREE.Vector3(0,2,8);
 let selectedMesh = null;
+// Define the target position for the camera
+var targetPosition = new THREE.Vector3();
+var roadWidth = 40; // Width of the road
+
+// Define the speed of the camera movement
+var cameraSpeed = 0.01;
+var rotationSpeed =  0.01;
+movementSpeed = 20;
+var tunnelSpeed = movementSpeed/100;
+
+
 
 self.onmessage = function(event) {
     let payload = event.data.payload;
-    console.log('event.data.method: ',event.data.method);
+//   
     switch(event.data.method){
-        case 'canvas':
-          
+        case 'canvas':          
           initCanvas(event.data)
-          addCube(event.data);
-
-
+        break;
+        case 'aninmate':
+          console.log('event.data.method: ',event.data.method);
+          startAnimation();
         break;
         case 'add_cube':
           addCube(event.data);
         break;
-        
+        case 'dismiss':
+          console.log('dismissCurrentCube');
+          dismissCurrentCube();
+        break;        
         case 'resize':
           updateRendererSize(event.data);
         break;
         case 'event':
          switch(payload.type){
-          case 'dismiss':
-            dismissCurrentCube();
-          break;    
+    
           case 'mousemove':
           break;
           case 'keydown':
@@ -94,11 +106,8 @@ const moveCamera = (payload)=>{
 }
 
 const dismissCurrentCube =()=>{
-  console.log('dismissCurrentCube')
 
   if(!selectedMesh){
-    console.log('no mesh')
-
     return;
   }
   // Store the parent group
@@ -110,8 +119,7 @@ const dismissCurrentCube =()=>{
           // The object's position is now relative to the group, so we need to adjust it to be relative to the scene
           selectedMesh.position.add(parentGroup.position);
           scene.add(selectedMesh);
-          console.log('readded')
-  let target = getRandomCoordinates(4,400);
+  let target = getRandomCoordinates(100,800);
   updatables.push({mesh:selectedMesh,targetVector:target});
 }
 
@@ -175,10 +183,7 @@ const checkAndRemoveFromGroup = (intersectedObject) => {
           centerPosition.y = camera.position.y+4;
           centerPosition.z = camera.position.z-20;
         if(intersectedObject.userData.imageData){
-          displayPost({description:intersectedObject.userData.imageData.description,
-                      user:intersectedObject.userData.imageData.user,
-                      userDesc:intersectedObject.userData.imageData.description,
-                      userProfileImgUrl:intersectedObject.userData.imageData.userProfileImgUrl})
+          displayPost(intersectedObject.userData.imageData)
           };
       }
   }
@@ -235,25 +240,29 @@ cameraGroup.position.y = 1.8; // Height similar to a car
 cameraGroup.position.z = 0; // Start at the beginning of the road
 
     addRoadSegments(images).then(()=>{
-// Define the target position for the camera
-var targetPosition = new THREE.Vector3();
-var roadWidth = 40; // Width of the road
+      self.postMessage({method:'ready'})
+       
+    })
+    
 
-// Define the speed of the camera movement
-var cameraSpeed = 0.01;
-var rotationSpeed =  0.01;
-movementSpeed = 20;
-var tunnelSpeed = movementSpeed/100;
+}
 
-var clock = new THREE.Clock();
+const startAnimation = () =>{
 
+  var clock = new THREE.Clock();
 const animate = function () {
   cubes.forEach((cube)=>{
     // cube.rotation.x += 0.01;
-    if(cube.userData.direction === 1){
+    switch(cube.userData.direction){
+    case 0:
       cube.rotation.y -=rotationSpeed;
-    } else {
+      break
+    case 1:
       cube.rotation.y +=rotationSpeed;
+      break      
+    case 3:
+      cube.rotation.x +=rotationSpeed;
+      break           
     }
 
     //  cube.rotation.z += 0.01;            
@@ -300,12 +309,11 @@ camera.lookAt(new THREE.Vector3(0, 0, camera.position.z - 100));
 
   renderer.render(scene, camera);
   requestAnimationFrame(animate);
-};
-        animate();        
-    })
-    
+};  
 
+animate()
 }
+
 
 const addCube = () =>{
   const geometry = new THREE.BoxGeometry(1, 1, 1);
@@ -360,9 +368,15 @@ const addRoadSegments = async(images)=> {
 
 const addCubesToSegments = (images) => {
   let promises = images.map((image) => {
-    if (!image.url.toLowerCase().endsWith('.gif')) {
+    if(image.url){
+      if (!image.url.toLowerCase().endsWith('.gif')) {
+        return loadImage(image);
+      }
+    } else {
       return loadImage(image);
     }
+
+    
   }).filter(Boolean);
 
   return Promise.all(promises);
@@ -401,9 +415,13 @@ const positionCubes = (images)=>{
           cube.rotation.x = Math.PI;
 
           grid[cellIndex] = true;
-          var randomInt = Math.floor(Math.random() * 2) + 1;
+          if(cube.userData.imageData.url===null){
+            cube.userData.direction = 3;
+          } else {
+            var randomInt = Math.floor(Math.random() * 2) + 1;
 
-          cube.userData.direction = randomInt;
+            cube.userData.direction = randomInt;
+          }
           cubes.push(cube);
           roadSegment.add(cube);
         }
@@ -462,17 +480,23 @@ const createCube = (image,cubeSize)=>{
 }
 
 const loadImage = async (image)=>{
-  var response = await fetch('/api/image-proxy?url='+image.url);
-  var blob = await response.blob();
-  let bitmap = await createImageBitmap(blob);
-  var imgTexture = new THREE.Texture(bitmap);
-  imgTexture.needsUpdate = true;
-
+  let imgTexture;
+  if(image.url){
+    var response = await fetch('/api/image-proxy?url='+image.url);
+    var blob = await response.blob();
+    let bitmap = await createImageBitmap(blob);
+    imgTexture = new THREE.Texture(bitmap);
+    imgTexture.needsUpdate = true;
+  }
   var userResponse = await fetch('/api/image-proxy?url='+image.userProfileImgUrl);
   var userBlob = await userResponse.blob();
   let userBitmap = await createImageBitmap(userBlob);
   var userTexture = new THREE.Texture(userBitmap);
   userTexture.needsUpdate = true;  
+  if(!image.url){
+    imgTexture = new THREE.Texture(userBitmap);
+    imgTexture.needsUpdate = true;
+  }
   return [imgTexture, userTexture, image];
 }
 
