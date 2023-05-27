@@ -258,7 +258,7 @@ const animate = function () {
 
     //  cube.rotation.z += 0.01;            
   })
-  
+
   var elapsedTime = clock.getDelta();
 
   for (let i = updatables.length - 1; i >= 0; i--) { 
@@ -294,7 +294,7 @@ const animate = function () {
       selectedMesh.position.lerp(centerPosition, cameraSpeed);
     }
 }
-
+camera.lookAt(new THREE.Vector3(0, 0, camera.position.z - 100));
    // Update the time uniform of the shader material
  // material.uniforms.time.value = clock.getElapsedTime();
 
