@@ -1,11 +1,11 @@
-import { getUsersStateless, getPostsStateless, buildProfilePictureUrl } from 'deso-protocol';
+import {identity, updateLikeStatus,  getPostsStateless, buildProfilePictureUrl } from 'deso-protocol';
 import {InputController, InputHandler} from '$lib/classes/D3D_InputController.mjs';
-let workers =[], inputHandler, inputController;
+let workers =[], inputHandler, inputController, selectedPost,currentUserStore;
 const workerURL = new URL('./workers/canvasWorker.js', import.meta.url);
 const canvasWorker = new Worker(workerURL, { type: "module" });
+import { writable } from 'svelte/store';	
 
-
-export const createScene = async (el, width,height, count, messageStore, imageUrlStore) => {
+export const createScene = async (el, width,height, count, messageStore, imageUrlStore, readyStore) => {
 
 
     let images = await getPostImages(count);
@@ -39,7 +39,7 @@ export const createScene = async (el, width,height, count, messageStore, imageUr
       });    
       window.dispatchEvent(new Event('resize'));      
     
-      initController();
+
        
       canvasWorker.onmessage = (message)=>{
         let data = message.data;
@@ -47,7 +47,12 @@ export const createScene = async (el, width,height, count, messageStore, imageUr
           case 'hudtext':
             messageStore.set(data.description);
             imageUrlStore.set(data.userProfileImgUrl);
+            selectedPost = data;
           break;
+          case 'ready':
+            readyStore.set(true);
+            console.log('ready');
+          break;          
           default:
             console.log('unknown message');
             console.log(data);     
@@ -130,10 +135,20 @@ console.log(event.target.id);
   switch(event.target.id){
   case 'hud-content':
   break;
+  case 'heart':
+    if((event.type==='touchend')&&(selectedPost)){
+      if(selectedPost.userPk){
+        console.log('send heart to ',selectedPost.userPk);
+        sendLike(selectedPost.userPK);
+      }
+    }     
+    break;   
   case 'dismiss':
-    canvasWorker.postMessage({
-      method: 'event',
-      payload: {type:'dismiss'}});
+    if(event.type==='touchend'){
+      canvasWorker.postMessage({
+        method: 'dismiss',
+        payload: {type:'dismiss'}});
+    }
   break;
   default:
     const touch = event.changedTouches[0];
@@ -162,15 +177,27 @@ const dispatchMouse = (event) =>{
   if(!canvasWorker){
     return;
   }
-
   switch(event.target.id){
     case 'hud-content':
     break;
     case 'dismiss':
-      canvasWorker.postMessage({
-        method: 'event',
-        payload: {type:'dismiss'}});
+      if(event.type==='mouseup'){
+        canvasWorker.postMessage({
+          method: 'dismiss',
+          payload: {type:'dismiss'}});
+      }
     break;
+    case 'heart':
+
+        if((event.type==='mouseup')&&(selectedPost)){
+          console.log('mouse heart');
+          console.log(selectedPost);          
+          if(selectedPost.postHashHex){
+            console.log('send heart to ',selectedPost.postHashHex);
+            sendLike(selectedPost.postHashHex);
+          }
+        }     
+        break; 
     default:
       canvasWorker.postMessage({
         method: 'event',
@@ -188,8 +215,9 @@ const getPostImages = async(count)=>{
   let posts = await getPosts(count);
   count = posts.length;
   posts.forEach(post => {
-    if(post.ImageURLs!==null&&(post.ProfileEntryResponse)){
-      let imgData = {url:post.ImageURLs[0],
+    if(post.ProfileEntryResponse){
+      let imgData = {url:(post.ImageURLs)?post.ImageURLs[0]:null,
+                    postHashHex: post.PostHashHex,
                     description: post.Body,
                     user:post.ProfileEntryResponse?.Username,
                     userDesc: post.ProfileEntryResponse?.Description,
@@ -197,9 +225,8 @@ const getPostImages = async(count)=>{
                     userProfileImgUrl: buildProfilePictureUrl(post.ProfileEntryResponse.PublicKeyBase58Check,{nodeURI:'https://node.deso.org'}) 
       };
       count--;
-      if((imgData.url!='')&&(imgData.url!=null)){
-        images.push(imgData);
-      }
+      images.push(imgData);
+      
     }
     
   });
@@ -207,6 +234,83 @@ const getPostImages = async(count)=>{
 
 }
 const getPosts = async (count)=>{
-  let res = await getPostsStateless({NumToFetch: count, MediaRequired: true});
+  let res = await getPostsStateless({NumToFetch: count});
   return res.PostsFound;
 }
+
+export const startAnimation = ()=>{
+  initController();
+  let payload = { method: 'aninmate'};
+  console.log('sending messgage');
+  console.log(canvasWorker);
+canvasWorker.postMessage(payload);   
+}
+
+const sendLike = async(postHashHex)=>{
+
+  let userData = localStorage.getItem('currentUser');
+  let currentUser = JSON.parse(userData);
+  if(!currentUser){
+    return;
+  }
+  if(currentUser===null){
+    console.log('not logged in ');
+    return;
+  }
+  
+ // check if the user can make a post
+ if (!identity.hasPermissions({
+    TransactionCountLimitMap: {
+      LIKE: 100
+    },
+  })) {
+
+    console.log('no permissions yet');
+  // if the user doesn't have permissions, request them
+  // and abort the submit
+  identity.requestPermissions({
+    GlobalDESOLimit: 10000000, // 0.01 DESO
+    TransactionCountLimitMap: {
+      LIKE: 100
+    },
+  });8
+  return; 
+}
+  let likeParams = {LikedPostHashHex: postHashHex,ReaderPublicKeyBase58Check:currentUser.publicKey};
+console.log(likeParams);
+  await updateLikeStatus(likeParams).then((resp) => {
+    console.log(resp);
+  });
+}
+
+const sendPost = async()=>{
+  // check if the user can make a post
+  if (!identity.hasPermissions({
+     TransactionCountLimitMap: {
+       LIKE: 1,
+     },
+   })) {
+   // if the user doesn't have permissions, request them
+   // and abort the submit
+   identity.requestPermissions({
+     GlobalDESOLimit: 10000000, // 0.01 DESO
+     TransactionCountLimitMap: {
+       LIKE: 3,
+     },
+   });
+   return;
+ }
+   
+ 
+   await submitPost({
+     UpdaterPublicKeyBase58Check: currentUser.PublicKeyBase58Check,
+     BodyObj: {
+       Body: body,
+       ImageURLs: [],
+       VideoURLs: [],
+     },
+   }).then((resp) => {
+     console.log(resp);
+     alert("Post submitted!");
+   });
+ }
