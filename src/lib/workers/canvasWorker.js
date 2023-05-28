@@ -6,6 +6,7 @@ let cameraGroup, roadGroup = new THREE.Group(), cubes =[], updatables = [];
 let roadSegments =[];
 let centerPosition = new THREE.Vector3(0,2,8);
 let selectedMesh = null;
+let raycaster = new THREE.Raycaster();
 // Define the target position for the camera
 var targetPosition = new THREE.Vector3();
 var roadWidth = 40; // Width of the road
@@ -133,19 +134,13 @@ const raycastFromCamera = (screenX, screenY) => {
   if(!renderer.domElement){  
     return false;
   }
-  // Normalized device coordinates
-  var ndcX = (screenX / clientWidth) * 2 - 1;
-  var ndcY = -(screenY / clientHeight) * 2 + 1;
-  // Create a Vector3 for the touch point in NDC
-  var touchPoint = new THREE.Vector3(ndcX, ndcY, 0.5); // z = 0.5 important!
-  // Unproject the touch point into world space
-  touchPoint.unproject(camera);
+  const pointer = new THREE.Vector2();
 
-  // Raycaster
-  var raycaster = new THREE.Raycaster();
+  pointer.x = ( screenX / clientWidth ) * 2 - 1;
+	pointer.y = - ( screenY / clientHeight ) * 2 + 1
 
-  // Set the Raycaster to start at the camera and pass through the touch point
-  raycaster.set(camera.position, touchPoint.sub(camera.position).normalize());
+  raycaster.setFromCamera( pointer, camera );
+
 
 
   // Get the list of objects the ray intersected
@@ -153,8 +148,9 @@ const raycastFromCamera = (screenX, screenY) => {
   if(intersects.length===0){
     intersects = raycaster.intersectObjects(roadSegment2.children, true);
 
+    
   }
-
+console.log(intersects)
 if(intersects.length){
   dismissCurrentCube();
   checkAndRemoveFromGroup(intersects[0].object);
@@ -217,32 +213,36 @@ const displayPost = (postData) =>{
   
 }
 const initCanvas=(d)=>{
-    const canvas = d.canvas;
-    const innerWidth = d.width;
-    const innerHeight = d.height;
-    clientWidth = innerWidth;
-    clientHeight = innerHeight;    
-    const images = d.images;
+  const canvas = d.canvas;
+  const innerWidth = d.width;
+  const innerHeight = d.height;
+  clientWidth = innerWidth;
+  clientHeight = innerHeight;    
+  const images = d.images;
 //const devicePixelRatio = d.devicePixelRatio;
-    renderer = new THREE.WebGLRenderer( { canvas:canvas } );
-  //  renderer.setPixelRatio( devicePixelRatio );    
- //   renderer.setSize( innerWidth, innerHeight );    
-	//	renderer.shadowMap.enabled = true;
+  renderer = new THREE.WebGLRenderer( { canvas:canvas } );
+//  renderer.setPixelRatio( devicePixelRatio );    
+//   renderer.setSize( innerWidth, innerHeight );    
+//	renderer.shadowMap.enabled = true;
 //		renderer.xr.enabled = true;    
-    scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
-    cameraGroup = new THREE.Group();
-    scene.add(camera);
-    createTunnel();
-    // Position camera
-// Position camera
-cameraGroup.position.y = 1.8; // Height similar to a car
-cameraGroup.position.z = 0; // Start at the beginning of the road
-//scene.add(cameraGroup)
-    addRoadSegments(images).then(()=>{
-      self.postMessage({method:'ready'})
-       
-    })
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
+  cameraGroup = new THREE.Group();
+  cameraGroup.add(camera);
+  scene.add(cameraGroup)
+  createTunnel();
+  // Position camera
+  // Position camera
+  cameraGroup.position.x = 0; // Height similar to a car
+  cameraGroup.position.y = 0.1; // Height similar to a car
+  cameraGroup.position.z = 0; // Start at the beginning of the road
+  // Make the camera look towards negative z
+  cameraGroup.lookAt(new THREE.Vector3(0, 0,1));
+
+  addRoadSegments(images).then(()=>{
+    self.postMessage({method:'ready'})
+      
+  })
     
 
 }
