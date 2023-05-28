@@ -480,6 +480,10 @@ const createCube = (image,cubeSize)=>{
         
         let cube = new THREE.Mesh(cubeGeometry, cubeMaterials);
         cube.userData.imageData = imageData;
+        if(imageData.direction = 3){
+          cube.rotation.y = Math.PI;
+
+        }
         return cube;
 }
 
