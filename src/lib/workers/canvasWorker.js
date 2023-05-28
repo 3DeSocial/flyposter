@@ -536,7 +536,7 @@ const createTunnel =async () =>{
       tunnelTexture.wrapS = tunnelTexture.wrapT = THREE.RepeatWrapping;
   var material = new THREE.MeshBasicMaterial({map:tunnelTexture, side: THREE.BackSide });        
 
-var geometry = new THREE.CylinderGeometry(60, 60, 1000, 32, 1, true);
+var geometry = new THREE.CylinderGeometry(60, 60, 1000, 256, 1, true);
 var mesh = new THREE.Mesh(geometry, material);
 mesh.rotation.x = Math.PI/2;
 mesh.position.z = -500;
