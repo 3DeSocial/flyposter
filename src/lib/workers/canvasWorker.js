@@ -7,6 +7,7 @@ let roadSegments =[];
 let centerPosition = new THREE.Vector3(0,2,8);
 let selectedMesh = null;
 let raycaster = new THREE.Raycaster();
+
 // Define the target position for the camera
 var targetPosition = new THREE.Vector3();
 var roadWidth = 40; // Width of the road
@@ -213,36 +214,36 @@ const displayPost = (postData) =>{
   
 }
 const initCanvas=(d)=>{
-  const canvas = d.canvas;
-  const innerWidth = d.width;
-  const innerHeight = d.height;
-  clientWidth = innerWidth;
-  clientHeight = innerHeight;    
-  const images = d.images;
+    const canvas = d.canvas;
+    const innerWidth = d.width;
+    const innerHeight = d.height;
+    clientWidth = innerWidth;
+    clientHeight = innerHeight;    
+    const images = d.images;
 //const devicePixelRatio = d.devicePixelRatio;
-  renderer = new THREE.WebGLRenderer( { canvas:canvas } );
-//  renderer.setPixelRatio( devicePixelRatio );    
-//   renderer.setSize( innerWidth, innerHeight );    
-//	renderer.shadowMap.enabled = true;
+    renderer = new THREE.WebGLRenderer( { canvas:canvas } );
+  //  renderer.setPixelRatio( devicePixelRatio );    
+ //   renderer.setSize( innerWidth, innerHeight );    
+	//	renderer.shadowMap.enabled = true;
 //		renderer.xr.enabled = true;    
-  scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
-  cameraGroup = new THREE.Group();
-  cameraGroup.add(camera);
-  scene.add(cameraGroup)
-  createTunnel();
-  // Position camera
-  // Position camera
-  cameraGroup.position.x = 0; // Height similar to a car
-  cameraGroup.position.y = 0.1; // Height similar to a car
-  cameraGroup.position.z = 0; // Start at the beginning of the road
-  // Make the camera look towards negative z
-  cameraGroup.lookAt(new THREE.Vector3(0, 0,1));
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
+    cameraGroup = new THREE.Group();
+    cameraGroup.add(camera);
+    scene.add(cameraGroup)
+    createTunnel();
+    // Position camera
+// Position camera
+cameraGroup.position.x = 0; // Height similar to a car
+cameraGroup.position.y = 0.1; // Height similar to a car
+cameraGroup.position.z = 0; // Start at the beginning of the road
+// Make the camera look towards negative z
+cameraGroup.lookAt(new THREE.Vector3(0, 0,1));
 
-  addRoadSegments(images).then(()=>{
-    self.postMessage({method:'ready'})
-      
-  })
+    addRoadSegments(images).then(()=>{
+      self.postMessage({method:'ready'})
+       
+    })
     
 
 }
@@ -250,10 +251,7 @@ const initCanvas=(d)=>{
 const startAnimation = () =>{
 
   var clock = new THREE.Clock();
-  camera.lookAt(new THREE.Vector3(0, 0, camera.position.z - 1000));
-let start = false;
 const animate = function () {
-
   cubes.forEach((cube)=>{
     // cube.rotation.x += 0.01;
     switch(cube.userData.direction){
@@ -306,10 +304,8 @@ const animate = function () {
       selectedMesh.position.lerp(centerPosition, cameraSpeed);
     }
 }
-
    // Update the time uniform of the shader material
  // material.uniforms.time.value = clock.getElapsedTime();
-  camera.lookAt(new THREE.Vector3(0, 0, camera.position.z - 1000));
 
   renderer.render(scene, camera);
   requestAnimationFrame(animate);
@@ -496,22 +492,16 @@ const loadImage = async (image)=>{
     imgTexture = new THREE.Texture(bitmap);
     imgTexture.needsUpdate = true;
   }
-  try {
-    var userResponse = await fetch('/api/image-proxy?url='+image.userProfileImgUrl);
-    var userBlob = await userResponse.blob();
-    let userBitmap = await createImageBitmap(userBlob);
-    var userTexture = new THREE.Texture(userBitmap);
-    userTexture.needsUpdate = true;  
-    if(!image.url){
-      imgTexture = new THREE.Texture(userBitmap);
-      imgTexture.needsUpdate = true;
-    }
-    return [imgTexture, userTexture, image];
-  } catch (error) {
-    console.log(error);
-    return false;
+  var userResponse = await fetch('/api/image-proxy?url='+image.userProfileImgUrl);
+  var userBlob = await userResponse.blob();
+  let userBitmap = await createImageBitmap(userBlob);
+  var userTexture = new THREE.Texture(userBitmap);
+  userTexture.needsUpdate = true;  
+  if(!image.url){
+    imgTexture = new THREE.Texture(userBitmap);
+    imgTexture.needsUpdate = true;
   }
- 
+  return [imgTexture, userTexture, image];
 }
 
 const createTunnel =async () =>{
@@ -525,7 +515,7 @@ const createTunnel =async () =>{
                   '/textures/alien-planet.png',
                   '/textures/flames1.png']
 
-  let noTextures = textures.length;
+  let noTextures = textures.length-1;
   var randomInt = Math.floor(Math.random() * noTextures);
   let textureUrl = textures[randomInt]
   var response = await fetch(textureUrl);
@@ -536,7 +526,7 @@ const createTunnel =async () =>{
       tunnelTexture.wrapS = tunnelTexture.wrapT = THREE.RepeatWrapping;
   var material = new THREE.MeshBasicMaterial({map:tunnelTexture, side: THREE.BackSide });        
 
-var geometry = new THREE.CylinderGeometry(60, 60, 1000, 256, 1, true);
+var geometry = new THREE.CylinderGeometry(60, 60, 1000, 32, 1, true);
 var mesh = new THREE.Mesh(geometry, material);
 mesh.rotation.x = Math.PI/2;
 mesh.position.z = -500;
