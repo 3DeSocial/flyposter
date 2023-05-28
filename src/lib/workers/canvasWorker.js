@@ -1,9 +1,8 @@
 import * as THREE from 'https://unpkg.com/three@0.152.2/build/three.module.js';
 import { VRButton } from 'https://unpkg.com/three@0.152.2/examples/jsm/webxr/VRButton.js';
 
-let renderer,scene,camera, roadSegment1, roadSegment2, tunnelTexture, movementSpeed,clientWidth,clientHeight;
+let roadSegments =[], renderer,scene,camera, roadSegment1, roadSegment2, tunnelTexture, movementSpeed,clientWidth,clientHeight;
 let cameraGroup, roadGroup = new THREE.Group(), cubes =[], updatables = [];
-let roadSegments =[];
 let centerPosition = new THREE.Vector3(0,2,8);
 let selectedMesh = null;
 let raycaster = new THREE.Raycaster();
@@ -143,14 +142,13 @@ const raycastFromCamera = (screenX, screenY) => {
   raycaster.setFromCamera( pointer, camera );
 
 
+  let intersects = [];
 
-  // Get the list of objects the ray intersected
-  var intersects = raycaster.intersectObjects(roadSegment1.children, true);
-  if(intersects.length===0){
-    intersects = raycaster.intersectObjects(roadSegment2.children, true);
-
-    
-  }
+  roadSegments.some(segment => {
+    intersects = raycaster.intersectObjects(segment.children, true);
+    return intersects.length > 0;  // This will stop the loop if intersects.length > 0
+  });
+  
 console.log(intersects)
 if(intersects.length){
   dismissCurrentCube();
@@ -284,18 +282,17 @@ const animate = function () {
   }
 
  // Move road segments
- roadSegment1.position.z += movementSpeed * elapsedTime;
- roadSegment2.position.z += movementSpeed * elapsedTime;
  tunnelTexture.offset.y -= tunnelSpeed * elapsedTime;
  tunnelTexture.offset.x -= (tunnelSpeed/2) * elapsedTime;
+ roadSegments.forEach((roadSegment, i) => {
+  roadSegment.position.z += 0.1;
 
-  // Loop road segments
- if (roadSegment1.position.z > camera.position.z + 1000) {
-   roadSegment1.position.z = roadSegment2.position.z - 1000;
- }
- if (roadSegment2.position.z > camera.position.z + 1000) {
-   roadSegment2.position.z = roadSegment1.position.z - 1000;
- }
+  let nextRoadSegment = roadSegments[(i + 1) % roadSegments.length];
+  if (roadSegment.position.z > camera.position.z + 500) {
+    roadSegment.position.z = nextRoadSegment.position.z - 500;
+  }
+});
+
  
  if (selectedMesh){
     // Generate a new target position if the camera is close to the current target
@@ -324,47 +321,39 @@ const addCube = () =>{
   cubes.push(cube);
 }
 
-const addRoadSegments = async(images)=> {
-
+const addRoadSegments = async(images) => {
   var response = await fetch('/textures/scifi_surface.jpg');
   var blob = await response.blob();
   var bitmap = await createImageBitmap(blob);
 
-  return new Promise((resolve,reject)=>{
-   //  createRoadSegments();
-
+  return new Promise((resolve, reject) => {
     // Create texture
     var texture = new THREE.Texture(bitmap);
     texture.needsUpdate = true;
-    // Create road segments and cubes
-    roadSegment1 = new THREE.Group();
-    roadSegment2 = new THREE.Group();
 
     var roadGeometry = new THREE.PlaneGeometry(10, 1000);
     roadGeometry.rotateX(-Math.PI / 2); // Rotate to lie flat
-    var roadMaterial1 = new THREE.MeshBasicMaterial({map:texture});
+    var roadMaterial = new THREE.MeshBasicMaterial({ map: texture });
+
     for (var i = 0; i < 2; i++) {
-        var roadSegment = i === 0 ? roadSegment1 : roadSegment2;
-        var roadMaterial = i === 0 ? roadMaterial1 : roadMaterial1;
+      var roadSegment = new THREE.Group();
+      var road = new THREE.Mesh(roadGeometry, roadMaterial);
+      road.position.y = -40; // Position road segments
 
-        var road = new THREE.Mesh(roadGeometry, roadMaterial);
-        road.position.y = -40; // Position road segments
+      roadSegment.add(road);
+      roadSegment.position.z = i === 0 ? 0 : -1000; // Position road segments
 
-        roadSegment.add(road);
-
-        roadSegment.position.z = i === 0 ? 0 : -1000; // Position road segments
-
-        scene.add(roadSegment);
-        roadSegments.push(roadSegment);
+      scene.add(roadSegment);
+      roadSegments.push(roadSegment);
     }
 
     addCubesToSegments(images).then((images) => {
       positionCubes(images);
       resolve();
-    });  
-
-    })
+    });
+  })
 }
+
 
 const addCubesToSegments = (images) => {
   let promises = images.map((image) => {
