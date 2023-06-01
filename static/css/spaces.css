@@ -344,13 +344,10 @@ form.nft-3d-overlay {
 }
 
 #space-ctr .statusbar{
-  background-color: #000;
+  display: inline-block;
   opacity: 0.5;
   position: absolute;
-  top: 0;
-  bottom:0;
-  left: 0;
-  right: 0;
+ 
 }
 #space-ctr .d3d-btn-top {
     cursor: pointer;

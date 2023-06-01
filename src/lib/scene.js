@@ -7,7 +7,7 @@ const canvasWorker = new Worker(workerURL, { type: "module" });
 import { writable } from 'svelte/store';	
 import { json } from '@sveltejs/kit';
 
-export const createScene = async (el, width,height, count, messageStore, imageUrlStore, readyStore, userDesc, userPk, userName, postTimeStamp) => {
+export const createScene = async (el, width,height, count) => {
   return new Promise((resolve, reject) => {
     
    getPostImages(count).then((images)=>{
@@ -40,31 +40,6 @@ export const createScene = async (el, width,height, count, messageStore, imageUr
           canvasWorker.postMessage(payload);   
         });    
         window.dispatchEvent(new Event('resize'));      
-      
-
-        
-        canvasWorker.onmessage = (message)=>{
-          let data = message.data;
-          switch(data.method){
-            case 'hudtext':
-              messageStore.set(data.description);
-              imageUrlStore.set(data.userProfileImgUrl);
-              selectedPost = data;
-              userDesc.set(data.userDesc);
-              userPk.set(data.userPk);
-              userName.set(data.userName);
-              let timeStamp = formatDate(parseInt(data.timeStamp) / 1000000);
-              postTimeStamp.set(timeStamp);
-            case 'ready':
-              readyStore.set(true);
-              console.log('ready');
-            break;          
-            default:
-              console.log('unknown message');
-              console.log(data);     
-            break;
-          }
-        }
 
         resolve(canvasWorker);
       })

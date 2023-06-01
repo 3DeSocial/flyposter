@@ -7,10 +7,17 @@
 	let ready = false;	
 	let loading = true;
 	let showUser = false;
+	let showOptions = false;	
 	let selectedPost = null;
 	let postDateTime = null;
-
-
+	let selected = ["Followers", "Following", "Seen", "Hot", "Global"];
+		  
+	const handleChange = () => {
+		console.log(selected);  // Output the values of the checked checkboxes
+	};
+	function toggleOptions() {
+		showOptions = !showOptions;
+	}
 	function toggleUser() {
 		showUser = !showUser;
 	}
@@ -71,7 +78,6 @@
 	})
 
 	const formatDate =(date) =>{
-		console.log('to format: ',date);
 		const options = { year: 'numeric', month: 'long', day: 'numeric' };
 		let formatted = new Date(date).toLocaleDateString('en', options)+ ' at '+new Date(date).toLocaleTimeString('en-gb');
 		if(formatted ==='Invalid Date'){
@@ -106,6 +112,11 @@
   });*/
 	
 	}
+
+	const convertUrlsToLinks = (text)=> {
+    	const urlRegex = /(\b(?:https?|ftp):\/\/[^\s]+)/g;
+    	return text.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+	  }	
 	
 </script>
 <svelte:head>
@@ -130,7 +141,31 @@
 </div>
 {/if}
 <div class="space-ctr" id="space-ctr">
-	<div style="display:none;" class="statusbar"></div>
+	<div class="statusbar" style="color: #fff; background-color:black">
+		<button id="options" style="width: 8em;padding: 0.5em 0em;" on:click|stopPropagation|preventDefault={toggleOptions}>Options</button>
+		{#if showOptions===true}	
+
+		<div>
+			<form  style="display: inline-block">
+				<input type="checkbox" bind:group={selected} value="Followers" on:change={handleChange} id="followers">
+				<label for="followers">Followers</label><br>
+				
+				<input type="checkbox" bind:group={selected} value="Following" on:change={handleChange} id="following">
+				<label for="following">Following</label><br>
+				
+				<input type="checkbox" bind:group={selected} value="Seen" on:change={handleChange} id="seen">
+				<label for="seen">Seen</label><br>
+				
+				<input type="checkbox" bind:group={selected} value="Hot" on:change={handleChange} id="hot">
+				<label for="hot">Hot</label><br>
+				
+				<input type="checkbox" bind:group={selected} value="Global" on:change={handleChange} id="global">
+				<label for="global">Global</label><br>
+
+			  </form>			
+		</div>
+		{/if}
+	</div>
 	{#if loading===false}	
 	{#if $currentUserStore != null}	
 	<!--<div id="control-btns"><ul>
@@ -148,10 +183,10 @@
 		<figcaption>{selectedPost.userName}</figcaption>
 		</figure>
 		{#if showUser}
-		<p id="user-description" style="display: inline; padding-top: 1em;">{selectedPost.userDesc}</p>
+		<p id="user-description" style="display: inline; padding-top: 1em;">{@html convertUrlsToLinks(selectedPost.userDesc)}</p>
 		{:else}
 				
-		<p id="post-description" style="display: inline; padding-top: 1em;"><time>Posted {postDateTime}</time><br/><br/>{selectedPost.description}</p>		
+		<p id="post-description" style="display: inline; padding-top: 1em;"><time>Posted {postDateTime}</time><br/><br/>{@html convertUrlsToLinks(selectedPost.description)}</p>		
 		{/if}	
 		<div id="hud-buttons"><button on:click|stopPropagation={handleOKClick} style="float:right; padding: 1em;" id="dismiss">OK</button></div>
 		</div>

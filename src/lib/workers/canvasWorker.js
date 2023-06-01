@@ -345,8 +345,12 @@ const addRoadSegments = async(images) => {
     }
 
     addCubesToSegments(images).then((images) => {
+
       positionCubes(images);
       resolve();
+    }).catch((error) => {
+      // Handle any errors that occurred during promise execution
+      console.error('Some posts could not be loaded:', error);
     });
   })
 }
@@ -354,19 +358,34 @@ const addRoadSegments = async(images) => {
 
 const addCubesToSegments = (images) => {
   let promises = images.map((image) => {
-    if(image.url){
-      if (!image.url.toLowerCase().endsWith('.gif')) {
+    try {
+      if (image.url) {
+        if (!image.url.toLowerCase().endsWith('.gif')) {
+          return loadImage(image);
+        }
+      } else {
         return loadImage(image);
       }
-    } else {
-      return loadImage(image);
+    } catch (error) {
+      return Promise.reject(error);
     }
-
-    
   }).filter(Boolean);
 
-  return Promise.all(promises);
+  return Promise.allSettled(promises)
+    .then((results) => {
+      const resolvedValues = results
+        .filter((result) => result.status === 'fulfilled')
+        .map((result) => result.value);
+
+      const rejectedErrors = results
+        .filter((result) => result.status === 'rejected')
+        .map((result) => result.reason);
+
+      // Return the resolved values or perform additional processing
+      return resolvedValues;
+    });
 };
+
 
 const positionCubes = (images)=>{
   let segment = 0;
