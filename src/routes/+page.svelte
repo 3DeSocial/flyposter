@@ -6,9 +6,17 @@
 	let currentUserStore = writable(null);
 	let readyStore = writable(false);
 	let messageStore = writable("");
-
+	let userDesc = writable("");
+	let userPk = writable("");
+	let userName=  writable("");
+	let postTimeStamp = writable("");
 	let loading = true;
+	let showUser = false;
 
+
+	function toggleUser() {
+		showUser = !showUser;
+	}
 // Create a writable store with a default value
 	let imageUrl = writable('');	
 	let width = window.innerWidth;
@@ -42,10 +50,13 @@
 		}
 
 });
-		createScene(el, width, height, 200, messageStore, imageUrl, readyStore);
+		createScene(el, width, height, 200, messageStore, imageUrl, readyStore, userDesc, userPk, userName, postTimeStamp);
 	});
 	//let audioSource = '/melodic-techno-03-extended-version-moogify-9867.mp3';
-
+	const handleProfileClick=()=>{
+		toggleUser();
+    // You can add more code here to handle the button click
+  	}
 	const handleOKClick =()=>{
 		messageStore.set('');
     // You can add more code here to handle the button click
@@ -105,8 +116,17 @@
 	<canvas v bind:this={el} id="app-canvas" style="width:100%; height: 100%;"></canvas>
 	{#if $messageStore}	
 		<div id="hud-content">
-		<img style="max-width:6em; padding: 1em;float: left;" src={$imageUrl} alt="Image">{$messageStore}
-		<div id="hud-buttons"><button on:click={handleOKClick} style="float:right; padding: 1em;" id="dismiss">OK</button></div>
+		<figure style="max-width:6em; padding: 0;margin: 0em 1em; float: left;">
+		<img on:click|stopPropagation={handleProfileClick} style="" src={$imageUrl} alt="Image"/>
+		<figcaption>{$userName}</figcaption>
+		</figure>
+		{#if showUser}
+		<p id="user-description" style="display: inline; padding-top: 1em;">{$userDesc}</p>
+		{:else}
+				
+		<p id="post-description" style="display: inline; padding-top: 1em;"><time>Posted {$postTimeStamp}</time><br/><br/>{$messageStore}</p>		
+		{/if}	
+		<div id="hud-buttons"><button on:click|stopPropagation={handleOKClick} style="float:right; padding: 1em;" id="dismiss">OK</button></div>
 		</div>
 	{/if}		
 </div>

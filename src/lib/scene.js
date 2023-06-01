@@ -4,8 +4,9 @@ let workers =[], inputHandler, inputController, selectedPost,currentUserStore;
 const workerURL = new URL('./workers/canvasWorker.js', import.meta.url);
 const canvasWorker = new Worker(workerURL, { type: "module" });
 import { writable } from 'svelte/store';	
+import { json } from '@sveltejs/kit';
 
-export const createScene = async (el, width,height, count, messageStore, imageUrlStore, readyStore) => {
+export const createScene = async (el, width,height, count, messageStore, imageUrlStore, readyStore, userDesc, userPk, userName, postTimeStamp) => {
 
 
     let images = await getPostImages(count);
@@ -48,7 +49,11 @@ export const createScene = async (el, width,height, count, messageStore, imageUr
             messageStore.set(data.description);
             imageUrlStore.set(data.userProfileImgUrl);
             selectedPost = data;
-          break;
+            userDesc.set(data.userDesc);
+            userPk.set(data.userPk);
+            userName.set(data.userName);
+            let timeStamp = formatDate(parseInt(data.timeStamp) / 1000000);
+            postTimeStamp.set(timeStamp);
           case 'ready':
             readyStore.set(true);
             console.log('ready');
@@ -59,6 +64,16 @@ export const createScene = async (el, width,height, count, messageStore, imageUr
           break;
         }
       }   
+}
+
+const formatDate =(date) =>{
+  console.log('to format: ',date);
+  const options = { year: 'numeric', month: 'long', day: 'numeric' };
+  let formatted = new Date(date).toLocaleDateString('en', options)+ ' at '+new Date(date).toLocaleTimeString('en-gb');
+  if(formatted ==='Invalid Date'){
+  } else {
+      return formatted;
+  }
 }
 
 const initController =() =>{
@@ -139,7 +154,7 @@ console.log(event.target.id);
     if((event.type==='touchend')&&(selectedPost)){
       if(selectedPost.userPk){
         console.log('send heart to ',selectedPost.userPk);
-        sendLike(selectedPost.userPK);
+        sendLike(selectedPost.userPk);
       }
     }     
     break;   
@@ -212,14 +227,16 @@ const dispatchMouse = (event) =>{
 }
 const getPostImages = async(count)=>{
   let images = [];
-  let posts = await getPosts(count);
+  let posts = await getPosts(count, 'recent');
   count = posts.length;
   posts.forEach(post => {
     if(post.ProfileEntryResponse){
       let imgData = {url:(post.ImageURLs)?post.ImageURLs[0]:null,
                     postHashHex: post.PostHashHex,
                     description: post.Body,
-                    user:post.ProfileEntryResponse?.Username,
+                    timeStamp: post.TimestampNanos,
+                    likeCount: post.likeCount,
+                    userName:post.ProfileEntryResponse?.Username,
                     userDesc: post.ProfileEntryResponse?.Description,
                     userPk: post.ProfileEntryResponse.PublicKeyBase58Check,
                     userProfileImgUrl: buildProfilePictureUrl(post.ProfileEntryResponse.PublicKeyBase58Check,{nodeURI:'https://node.deso.org'}) 
@@ -233,8 +250,17 @@ const getPostImages = async(count)=>{
   return images;
 
 }
-const getPosts = async (count)=>{
-  let res = await getPostsStateless({NumToFetch: count});
+const getPosts = async (count, feed)=>{
+  let res = null;
+  switch(feed){
+    case 'following':
+    break;
+    case 'global':
+    break;
+    default: // recent
+      res = await getPostsStateless({NumToFetch: count});
+    break;
+  }
   return res.PostsFound;
 }
 

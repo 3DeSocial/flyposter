@@ -27,14 +27,12 @@ self.onmessage = function(event) {
           initCanvas(event.data)
         break;
         case 'aninmate':
-          console.log('event.data.method: ',event.data.method);
           startAnimation();
         break;
         case 'add_cube':
           addCube(event.data);
         break;
         case 'dismiss':
-          console.log('dismissCurrentCube');
           dismissCurrentCube();
         break;        
         case 'resize':
@@ -149,7 +147,6 @@ const raycastFromCamera = (screenX, screenY) => {
     return intersects.length > 0;  // This will stop the loop if intersects.length > 0
   });
   
-console.log(intersects)
 if(intersects.length){
   dismissCurrentCube();
   checkAndRemoveFromGroup(intersects[0].object);
