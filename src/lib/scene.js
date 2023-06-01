@@ -1,5 +1,6 @@
 import {identity, updateLikeStatus,  getPostsStateless, buildProfilePictureUrl } from 'deso-protocol';
 import {InputController, InputHandler} from '$lib/classes/D3D_InputController.mjs';
+
 let workers =[], inputHandler, inputController, selectedPost,currentUserStore;
 const workerURL = new URL('./workers/canvasWorker.js', import.meta.url);
 const canvasWorker = new Worker(workerURL, { type: "module" });
@@ -7,73 +8,69 @@ import { writable } from 'svelte/store';
 import { json } from '@sveltejs/kit';
 
 export const createScene = async (el, width,height, count, messageStore, imageUrlStore, readyStore, userDesc, userPk, userName, postTimeStamp) => {
-
-
-    let images = await getPostImages(count);
-
-    const offscreen = el.transferControlToOffscreen();
-
+  return new Promise((resolve, reject) => {
     
-    let payload = { 
-        method: 'canvas',
-        canvas: offscreen,
-        height: height,
-        width: width,
-        images: images,
-        devicePixelRatio: window.devicePixelRatio
-      }
+   getPostImages(count).then((images)=>{
 
+      const offscreen = el.transferControlToOffscreen();
 
-    canvasWorker.postMessage(payload, [offscreen]);
-
-
-
-    window.addEventListener('resize', (e) => {
-
-        width = window.innerWidth;
-        height = window.innerHeight;
-        let payload = { method: 'resize',
-            height: height,
-            width: width
-          }
-        canvasWorker.postMessage(payload);   
-      });    
-      window.dispatchEvent(new Event('resize'));      
-    
-
-       
-      canvasWorker.onmessage = (message)=>{
-        let data = message.data;
-        switch(data.method){
-          case 'hudtext':
-            messageStore.set(data.description);
-            imageUrlStore.set(data.userProfileImgUrl);
-            selectedPost = data;
-            userDesc.set(data.userDesc);
-            userPk.set(data.userPk);
-            userName.set(data.userName);
-            let timeStamp = formatDate(parseInt(data.timeStamp) / 1000000);
-            postTimeStamp.set(timeStamp);
-          case 'ready':
-            readyStore.set(true);
-            console.log('ready');
-          break;          
-          default:
-            console.log('unknown message');
-            console.log(data);     
-          break;
+      
+      let payload = { 
+          method: 'canvas',
+          canvas: offscreen,
+          height: height,
+          width: width,
+          images: images,
+          devicePixelRatio: window.devicePixelRatio
         }
-      }   
-}
 
-const formatDate =(date) =>{
-  console.log('to format: ',date);
-  const options = { year: 'numeric', month: 'long', day: 'numeric' };
-  let formatted = new Date(date).toLocaleDateString('en', options)+ ' at '+new Date(date).toLocaleTimeString('en-gb');
-  if(formatted ==='Invalid Date'){
-  } else {
-      return formatted;
-  }
+
+      canvasWorker.postMessage(payload, [offscreen]);
+
+
+
+      window.addEventListener('resize', (e) => {
+
+          width = window.innerWidth;
+          height = window.innerHeight;
+          let payload = { method: 'resize',
+              height: height,
+              width: width
+            }
+          canvasWorker.postMessage(payload);   
+        });    
+        window.dispatchEvent(new Event('resize'));      
+      
+
+        
+        canvasWorker.onmessage = (message)=>{
+          let data = message.data;
+          switch(data.method){
+            case 'hudtext':
+              messageStore.set(data.description);
+              imageUrlStore.set(data.userProfileImgUrl);
+              selectedPost = data;
+              userDesc.set(data.userDesc);
+              userPk.set(data.userPk);
+              userName.set(data.userName);
+              let timeStamp = formatDate(parseInt(data.timeStamp) / 1000000);
+              postTimeStamp.set(timeStamp);
+            case 'ready':
+              readyStore.set(true);
+              console.log('ready');
+            break;          
+            default:
+              console.log('unknown message');
+              console.log(data);     
+            break;
+          }
+        }
+
+        resolve(canvasWorker);
+      })
+    })   
+
+
 }
 
 const initController =() =>{

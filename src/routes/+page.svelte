@@ -4,14 +4,11 @@
 	import { writable } from 'svelte/store';	
 	import { createScene, startAnimation } from '../lib/scene.js';
 	let currentUserStore = writable(null);
-	let readyStore = writable(false);
-	let messageStore = writable("");
-	let userDesc = writable("");
-	let userPk = writable("");
-	let userName=  writable("");
-	let postTimeStamp = writable("");
+	let ready = false;	
 	let loading = true;
 	let showUser = false;
+	let selectedPost = null;
+	let postDateTime = null;
 
 
 	function toggleUser() {
@@ -39,26 +36,56 @@
 			LIKE: 100,
 			FOLLOW: 100
 			}
-		}
+			}
 		})		
 		identity.subscribe((state) => {
-		const event = state.event;
-		if(state.currentUser){
-			let currentUser = state.currentUser;
-			currentUserStore.set(currentUser);
-		
-		}
+			const event = state.event;
+			if(state.currentUser){
+				let currentUser = state.currentUser;
+				currentUserStore.set(currentUser);
+			
+			}
 
-});
-		createScene(el, width, height, 200, messageStore, imageUrl, readyStore, userDesc, userPk, userName, postTimeStamp);
-	});
-	//let audioSource = '/melodic-techno-03-extended-version-moogify-9867.mp3';
+		});
+		
+		createScene(el, width, height, 200).then((canvasWorker)=>{
+
+			canvasWorker.onmessage = (message)=>{
+				let data = message.data;
+				switch(data.method){
+					case 'hudtext':
+						selectedPost = data;
+						postDateTime = formatDate(parseInt(data.timeStamp) / 1000000);
+						showUser = false;
+					break;
+					case 'ready':
+						ready = true;
+					break;          
+					default:
+						console.log('unknown message');
+						console.log(data);     
+					break;
+				}
+			};
+		});
+	})
+
+	const formatDate =(date) =>{
+		console.log('to format: ',date);
+		const options = { year: 'numeric', month: 'long', day: 'numeric' };
+		let formatted = new Date(date).toLocaleDateString('en', options)+ ' at '+new Date(date).toLocaleTimeString('en-gb');
+		if(formatted ==='Invalid Date'){
+		} else {
+			return formatted;
+		}
+	}
+
 	const handleProfileClick=()=>{
 		toggleUser();
     // You can add more code here to handle the button click
   	}
 	const handleOKClick =()=>{
-		messageStore.set('');
+		selectedPost = null;
     // You can add more code here to handle the button click
   	}
 	const handleGuestClick=()=>{
@@ -91,7 +118,7 @@
 	<p>Controls<p>
 	<p>Steering: W S A D</p>
 	<p>Faster = R, Slower = F</p>
-	{#if $readyStore===true}	
+	{#if ready===true}	
 	<h2>Login</h2>
 	<button id="guest" on:click={handleGuestClick}>Guest</button>
 	<!--<button id="login" on:click={handleLoginClick}>Login With DeSo</button>	-->
@@ -114,17 +141,17 @@
 	{/if}
 	{/if}
 	<canvas v bind:this={el} id="app-canvas" style="width:100%; height: 100%;"></canvas>
-	{#if $messageStore}	
+	{#if selectedPost!==null}	
 		<div id="hud-content">
 		<figure style="max-width:6em; padding: 0;margin: 0em 1em; float: left;">
-		<img on:click|stopPropagation={handleProfileClick} style="" src={$imageUrl} alt="Image"/>
-		<figcaption>{$userName}</figcaption>
+		<img on:click|stopPropagation={handleProfileClick} style="" src={selectedPost.userProfileImgUrl} alt="Image"/>
+		<figcaption>{selectedPost.userName}</figcaption>
 		</figure>
 		{#if showUser}
-		<p id="user-description" style="display: inline; padding-top: 1em;">{$userDesc}</p>
+		<p id="user-description" style="display: inline; padding-top: 1em;">{selectedPost.userDesc}</p>
 		{:else}
 				
-		<p id="post-description" style="display: inline; padding-top: 1em;"><time>Posted {$postTimeStamp}</time><br/><br/>{$messageStore}</p>		
+		<p id="post-description" style="display: inline; padding-top: 1em;"><time>Posted {postDateTime}</time><br/><br/>{selectedPost.description}</p>		
 		{/if}	
 		<div id="hud-buttons"><button on:click|stopPropagation={handleOKClick} style="float:right; padding: 1em;" id="dismiss">OK</button></div>
 		</div>
