@@ -1,11 +1,14 @@
 <script>
-	import { identity,  configure } from 'deso-protocol';
+	import { identity,  configure, getUsernameForPublicKey, buildProfilePictureUrl } from 'deso-protocol';
 	import { onMount } from 'svelte';
 	import { writable } from 'svelte/store';	
 	import { createScene, startAnimation } from '../lib/scene.js';
+  import { UnsignedShortType } from 'three';
 	let currentUserStore = writable(null);
+	let currentUser = null;
 	let ready = false;	
 	let loading = true;
+	let loggedIn = false;
 	let showUser = false;
 	let showOptions = false;	
 	let selectedPost = null;
@@ -24,11 +27,11 @@
 // Create a writable store with a default value
 	let imageUrl = writable('');	
 	let width = window.innerWidth;
-  let height = window.innerHeight;
+  	let height = window.innerHeight;
 
 	let el;
 
-	onMount ((count) => {
+	onMount (async (count) => {
 		//const audioElement = document.getElementById('audioElement');
 		//audioElement.play();
 		configure({
@@ -47,14 +50,23 @@
 		})		
 		identity.subscribe((state) => {
 			const event = state.event;
-			if(state.currentUser){
-				let currentUser = state.currentUser;
-				currentUserStore.set(currentUser);
+				if(state.currentUser){
+					currentUser = getCurrentUser(state.currentUser);
+					currentUserStore.set(currentUser);
+					loggedIn = true;
+				}
 			
-			}
 
 		});
 		
+		// check identity for already logged in user
+		currentUser = await getCurrentUser();
+		if(currentUser){
+			console.log(currentUser);
+			currentUserStore.set(currentUser);
+			loggedIn = true;
+		};
+
 		createScene(el, width, height, 200).then((canvasWorker)=>{
 
 			canvasWorker.onmessage = (message)=>{
@@ -95,14 +107,14 @@
     // You can add more code here to handle the button click
   	}
 	const handleGuestClick=()=>{
-		startAnimation()
-		loading = false;
+		currentUser = {'Username':'Guest'};
+		startAnimation();
 	}
 
 	const handleLoginClick=async()=>{
 		await identity.login();
 		startAnimation();
-		
+		loading = false;		
 	/*	await identity.requestPermissions({
     TransactionCountLimitMap: {
       SUBMIT_POST: 10,
@@ -111,6 +123,42 @@
     },
   });*/
 	
+	}
+
+	const handleLogOutClick=async()=>{
+		await identity.logout();
+		loggedIn = false;	
+	/*	await identity.requestPermissions({
+    TransactionCountLimitMap: {
+      SUBMIT_POST: 10,
+	  LIKE: 1000,
+	  FOLLOW: 1000
+    },
+  });*/
+	
+	}
+
+	const handleStart = () =>{
+		startAnimation()
+		loading = false;
+	}
+	const getCurrentUser = async (user) =>{
+		if(!user){
+			const state = identity.snapshot();
+			if (state.currentUser) {
+				user = state.currentUser;
+			} else {
+				// no current user
+				return false;
+			}
+		} 
+		return await getUserData(user);
+	}
+
+	const getUserData = async (user)=>{
+		user.Username = await getUsernameForPublicKey(user.publicKey);
+		user.profileURL =buildProfilePictureUrl(user.publicKey,{nodeURI:'https://node.deso.org'});
+		return user;
 	}
 
 	const convertUrlsToLinks = (text)=> {
@@ -126,17 +174,27 @@
 {#if loading===true}	
 <div class="loader-ctr" style="text-align: center;">
 	<img alt="3DeSocial Logo" style="max-height: 140px; margin: 0 auto;" src="/3desocial.gif"/>
-	<p>Controls<p>
-	<p>Steering: W S A D</p>
-	<p>Faster = R, Slower = F</p>
-	{#if ready===true}	
-	<h2>Login</h2>
-	<button id="guest" on:click={handleGuestClick}>Guest</button>
-	<!--<button id="login" on:click={handleLoginClick}>Login With DeSo</button>	-->
+	{#if loggedIn}
+		<h1>Welcome</h1>
+		<p>You are logged in as {currentUser.Username}</p>
+		<div><img src="{currentUser.profileURL}"/></div>
+		
+		<button id="logout" on:click={handleLogOutClick}>Log Out</button>
 
 	{:else}
-	<h1>Please Wait...</h1>
-	<p>Loading latest posts.</p>	
+		<h1>Please Log in</h1>
+		<button id="guest" on:click={handleGuestClick}>Guest</button>
+		<button id="login" on:click={handleLoginClick}>Login With DeSo</button>
+	{/if}
+
+	{#if ready===true}	
+		<h2>Controls</h2>
+		<p>Steering: W S A D</p>
+		<p>Faster = R, Slower = F</p>
+		<button on:click={handleStart}>Start</button>
+	{:else}
+		<h1>Please Wait...</h1>
+		<p>Loading latest posts.</p>	
 	{/if}
 </div>
 {/if}
