@@ -1,53 +1,107 @@
-import {identity, updateLikeStatus,  getPostsStateless, buildProfilePictureUrl } from 'deso-protocol';
+import {identity, updateLikeStatus,  getPostsStateless, buildProfilePictureUrl, getIsFollowing } from 'deso-protocol';
 import {InputController, InputHandler} from '$lib/classes/D3D_InputController.mjs';
 
-let workers =[], inputHandler, inputController, selectedPost,currentUserStore;
+let workers =[], inputHandler, inputController, selectedPost,currentUserStore, currentUser;
 const workerURL = new URL('./workers/canvasWorker.js', import.meta.url);
 const canvasWorker = new Worker(workerURL, { type: "module" });
 import { writable } from 'svelte/store';	
 import { json } from '@sveltejs/kit';
 
-export const createScene = async (el, width,height, count) => {
+export const createScene = async (el, width,height, count, user) => {
+  currentUser = user;
   return new Promise((resolve, reject) => {
-    
-   getPostImages(count).then((images)=>{
-
-      const offscreen = el.transferControlToOffscreen();
-
-      
-      let payload = { 
-          method: 'canvas',
-          canvas: offscreen,
-          height: height,
-          width: width,
-          images: images,
-          devicePixelRatio: window.devicePixelRatio
+    console.log(currentUser);
+    getPostImages(count, currentUser.publicKey).then((images)=>{
+      console.log('imagearray:');
+console.log(images);
+        const offscreen = el.transferControlToOffscreen();
+        
+        let payload = { 
+            method: 'canvas',
+            canvas: offscreen,
+            height: height,
+            width: width,
+            images: images,
+            devicePixelRatio: window.devicePixelRatio
         }
 
+        canvasWorker.postMessage(payload, [offscreen]);
 
-      canvasWorker.postMessage(payload, [offscreen]);
+         window.addEventListener('resize', (e) => {
 
+              width = window.innerWidth;
+              height = window.innerHeight;
+              let payload = { method: 'resize',
+                  height: height,
+                  width: width
+                }
+              canvasWorker.postMessage(payload);   
+            });    
+            window.dispatchEvent(new Event('resize'));      
 
-
-      window.addEventListener('resize', (e) => {
-
-          width = window.innerWidth;
-          height = window.innerHeight;
-          let payload = { method: 'resize',
-              height: height,
-              width: width
-            }
-          canvasWorker.postMessage(payload);   
-        });    
-        window.dispatchEvent(new Event('resize'));      
-
-        resolve(canvasWorker);
+            resolve(canvasWorker);
       })
-    })   
+    })
+}
 
+/*
+const processPostImages = (images) =>{
+
+
+// Trigger all three updates at the same time for each object
+let promises = array.map(obj => 
+  Promise.all([imgProccess1(obj), imgProccess2(obj), imgProccess3(obj)])
+    .then(updatedObjects => {
+      // All three updates for this object are complete
+      // Perform the check and return the updated object if it passes the check
+      if (checkObject(obj)) {
+        return obj;
+      }
+    })
+    .catch(error => {
+      // If any request fails, catch the error and return null
+      console.error(error);
+      return null;
+    })
+);
+
+// Wait for all objects to be updated and checked
+Promise.all(promises).then(results => {
+  // Filter out any null values (these are the objects that had a request fail)
+  let filteredArray = results.filter(obj => obj !== null);
+  console.log(filteredArray);
+});
 
 }
 
+imgProccess1 = async (obj) =>{
+  // get following status
+}
+
+imgProccess2 = async (obj) =>{
+  // get followed status
+}
+
+imgProccess3 = async (obj) =>{
+  // get liked status
+}
+
+imgProccess3 = async (obj) =>{
+  // get diamond status
+}
+
+// Assume we have a function that checks an object
+checkObject = (obj) => {
+  // Is the post a comment?
+
+  // Is Coin price > 0?
+
+  // Is it a repost?
+
+
+  // Return true if the object passes the check, false otherwise
+}
+*/
 const initController =() =>{
 
   inputHandler = new InputHandler();
@@ -197,13 +251,27 @@ const dispatchMouse = (event) =>{
     break;
   }
 }
-const getPostImages = async(count)=>{
+const getPostImages = async(count, publicKey)=>{
   let images = [];
-  let posts = await getPosts(count, 'recent');
-  count = posts.length;
+  let posts = await getPosts(count,publicKey, 'recent');
+  console.log('posts.length',posts.length);
   posts.forEach(post => {
     if(post.ProfileEntryResponse){
+      let following = isUserFollowing(post.ProfileEntryResponse.PublicKeyBase58Check);
+      let follower = isUserFollowedBy(post.ProfileEntryResponse.PublicKeyBase58Check, publicKey);      
+     // let isHodling = isUserFollowedBy(post.ProfileEntryResponse.PublicKeyBase58Check, publicKey);      
+    //  let isHodler = isUserFollowedBy(post.ProfileEntryResponse.PublicKeyBase58Check, publicKey);      
+
+      console.log('follower: ', follower);
+
       let imgData = {url:(post.ImageURLs)?post.ImageURLs[0]:null,
+                    following: following,
+                    follower: follower,
+                    liked: post.PostEntryReaderState.LikedByReader,
+                    dimondsSent: post.PostEntryReaderState.DiamondLevelBestowed,
+                    isComment: (post.ParentStakeID === '')?false:true,
+                    isNFT: post.IsNFT,
+                    creatorCoinPrice: post.ProfileEntryResponse.CoinPriceDeSoNanos,
                     postHashHex: post.PostHashHex,
                     description: post.Body,
                     timeStamp: post.TimestampNanos,
@@ -213,16 +281,30 @@ const getPostImages = async(count)=>{
                     userPk: post.ProfileEntryResponse.PublicKeyBase58Check,
                     userProfileImgUrl: buildProfilePictureUrl(post.ProfileEntryResponse.PublicKeyBase58Check,{nodeURI:'https://node.deso.org'}) 
       };
-      count--;
-      images.push(imgData);
-      
+      if((!imgData.isComment) &&
+        (parseFloat(imgData.creatorCoinPrice)>0)){
+        images.push(imgData);
+      };
+
     }
-    
+
   });
   return images;
 
+  
 }
-const getPosts = async (count, feed)=>{
+
+const isUserFollowing = (postPublicKey) =>{
+  console.log('isUserFollowing: ',postPublicKey);
+  return currentUser.followingIds.indexOf(postPublicKey);
+}
+
+const isUserFollowedBy = (postPublicKey) =>{
+  console.log('isUserFollowedBy: ',postPublicKey);
+  return currentUser.followerIds.indexOf(postPublicKey);
+}
+
+const getPosts = async (count, publicKey, feed)=>{
   let res = null;
   switch(feed){
     case 'following':
@@ -230,7 +312,7 @@ const getPosts = async (count, feed)=>{
     case 'global':
     break;
     default: // recent
-      res = await getPostsStateless({NumToFetch: count});
+      res = await getPostsStateless({ReaderPublicKeyBase58Check:publicKey, NumToFetch: count});
     break;
   }
   return res.PostsFound;

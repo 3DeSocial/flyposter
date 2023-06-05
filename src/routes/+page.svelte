@@ -1,5 +1,5 @@
 <script>
-	import { identity,  configure, getUsernameForPublicKey, buildProfilePictureUrl } from 'deso-protocol';
+	import { identity,  configure, getUsernameForPublicKey, buildProfilePictureUrl, getFollowersForUser  } from 'deso-protocol';
 	import { onMount } from 'svelte';
 	import { writable } from 'svelte/store';	
 	import { createScene, startAnimation } from '../lib/scene.js';
@@ -48,12 +48,14 @@
 			}
 			}
 		})		
-		identity.subscribe((state) => {
+		identity.subscribe( async (state) => {
 			const event = state.event;
 				if(state.currentUser){
-					currentUser = getCurrentUser(state.currentUser);
-					currentUserStore.set(currentUser);
-					loggedIn = true;
+					currentUser = await getCurrentUser(state.currentUser);
+					if(currentUser){
+						currentUser = await getCurrentUserData(currentUser);
+					}
+					
 				}
 			
 
@@ -62,33 +64,61 @@
 		// check identity for already logged in user
 		currentUser = await getCurrentUser();
 		if(currentUser){
-			console.log(currentUser);
-			currentUserStore.set(currentUser);
+			if(currentUser){
+				currentUser = await getCurrentUserData(currentUser);
+			}
 			loggedIn = true;
+
+			createScene(el, width, height, 2000, currentUser).then((canvasWorker)=>{
+
+				canvasWorker.onmessage = (message)=>{
+					let data = message.data;
+					switch(data.method){
+						case 'hudtext':
+							selectedPost = data;
+							postDateTime = formatDate(parseInt(data.timeStamp) / 1000000);
+							showUser = false;
+						break;
+						case 'ready':
+							ready = true;
+						break;          
+						default:
+							console.log('unknown message');
+							console.log(data);     
+						break;
+					}
+				};
+			});
 		};
-
-		createScene(el, width, height, 200).then((canvasWorker)=>{
-
-			canvasWorker.onmessage = (message)=>{
-				let data = message.data;
-				switch(data.method){
-					case 'hudtext':
-						selectedPost = data;
-						postDateTime = formatDate(parseInt(data.timeStamp) / 1000000);
-						showUser = false;
-					break;
-					case 'ready':
-						ready = true;
-					break;          
-					default:
-						console.log('unknown message');
-						console.log(data);     
-					break;
-				}
-			};
-		});
 	})
 
+	const getCurrentUserData = async (currentUser) =>{
+		console.log('currentUser ',currentUser);
+		let getFollowerParams = {PublicKeyBase58Check: currentUser.publicKey,
+								Username:currentUser.Username,
+								GetEntriesFollowingUsername: true,
+								NumToFetch: 10000000
+								};
+		console.log(getFollowerParams);
+		currentUser.followers = await getFollowersForUser(getFollowerParams);
+		currentUser.followerIds = currentUser.followers.map(obj => [obj.PublicKeyBase58Check]);					
+		console.log('currentUser.followerIds: ',currentUser.followerIds);
+
+
+
+		console.log('currentUser ',currentUser);
+		let getFollowingParams = {PublicKeyBase58Check: currentUser.publicKey,
+							Username:currentUser.Username,
+								GetEntriesFollowingUsername: false,
+								NumToFetch: 10000000
+								};
+		console.log(getFollowingParams);
+		currentUser.following = await getFollowersForUser(getFollowingParams);
+		
+		currentUser.followingIds = currentUser.following.map(obj => [obj.PublicKeyBase58Check]);
+		console.log('currentUser.followingIds: ',currentUser.followingIds);
+		loggedIn = true;		
+	}
 	const formatDate =(date) =>{
 		const options = { year: 'numeric', month: 'long', day: 'numeric' };
 		let formatted = new Date(date).toLocaleDateString('en', options)+ ' at '+new Date(date).toLocaleTimeString('en-gb');
