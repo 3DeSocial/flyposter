@@ -1,5 +1,4 @@
 import * as THREE from 'https://unpkg.com/three@0.152.2/build/three.module.js';
-import { VRButton } from 'https://unpkg.com/three@0.152.2/examples/jsm/webxr/VRButton.js';
 
 let roadSegments =[], renderer,scene,camera, roadSegment1, roadSegment2, tunnelTexture, movementSpeed,clientWidth,clientHeight;
 let cameraGroup, roadGroup = new THREE.Group(), cubes =[], updatables = [];
@@ -209,6 +208,7 @@ const displayPost = (postData) =>{
   
 }
 const initCanvas=(d)=>{
+  console.log(d);
     const canvas = d.canvas;
     const innerWidth = d.width;
     const innerHeight = d.height;
@@ -217,6 +217,7 @@ const initCanvas=(d)=>{
     const images = d.images;
 //const devicePixelRatio = d.devicePixelRatio;
     renderer = new THREE.WebGLRenderer( { canvas:canvas } );
+    console.log('initCanvas');
   //  renderer.setPixelRatio( devicePixelRatio );    
  //   renderer.setSize( innerWidth, innerHeight );    
 	//	renderer.shadowMap.enabled = true;
@@ -278,31 +279,35 @@ const animate = function () {
   }
   }
 
- // Move road segments
- tunnelTexture.offset.y -= tunnelSpeed * elapsedTime;
- tunnelTexture.offset.x -= (tunnelSpeed/2) * elapsedTime;
- roadSegments.forEach((roadSegment, i) => {
-  roadSegment.position.z += 0.1;
+  if(tunnelTexture){
+    // Move road segments
+    tunnelTexture.offset.y -= tunnelSpeed * elapsedTime;
+    tunnelTexture.offset.x -= (tunnelSpeed/2) * elapsedTime;
+    roadSegments.forEach((roadSegment, i) => {
+      roadSegment.position.z += 0.1;
 
-  let nextRoadSegment = roadSegments[(i + 1) % roadSegments.length];
-  if (roadSegment.position.z > camera.position.z + 500) {
-    roadSegment.position.z = nextRoadSegment.position.z - 500;
+      let nextRoadSegment = roadSegments[(i + 1) % roadSegments.length];
+      if (roadSegment.position.z > camera.position.z + 500) {
+        roadSegment.position.z = nextRoadSegment.position.z - 500;
+      }
+    })
   }
-});
 
- 
- if (selectedMesh){
-    // Generate a new target position if the camera is close to the current target
-    if (selectedMesh.position.distanceTo(centerPosition) > 1) {
-      // Move the selectedMesh towards the target position
-      selectedMesh.position.lerp(centerPosition, cameraSpeed);
-    }
-}
-   // Update the time uniform of the shader material
- // material.uniforms.time.value = clock.getElapsedTime();
 
-  renderer.render(scene, camera);
-  requestAnimationFrame(animate);
+  
+  if (selectedMesh){
+      // Generate a new target position if the camera is close to the current target
+      if (selectedMesh.position.distanceTo(centerPosition) > 1) {
+        // Move the selectedMesh towards the target position
+        selectedMesh.position.lerp(centerPosition, cameraSpeed);
+      }
+  }
+    // Update the time uniform of the shader material
+  // material.uniforms.time.value = clock.getElapsedTime();
+  if(renderer){
+    renderer.render(scene, camera);
+    requestAnimationFrame(animate);
+  }
 };  
 
 animate()

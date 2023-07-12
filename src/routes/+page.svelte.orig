@@ -6,8 +6,6 @@
   import { UnsignedShortType } from 'three';
 	let currentUserStore = writable(null);
 	let currentUser = null;
-	let userName = null
-	let profileURL = null
 	let ready = false;	
 	let loading = true;
 	let loggedIn = false;
@@ -16,8 +14,13 @@
 	let selectedPost = null;
 	let postDateTime = null;
 	let selected = ["Followers", "Following", "Seen", "Hot", "Global"];
+<<<<<<< Updated upstream
+		  
+=======
 	let initialized = false;
+	let canvas, gl;
 	let noImages = 20;
+>>>>>>> Stashed changes
 	const handleChange = () => {
 		console.log(selected);  // Output the values of the checked checkboxes
 	};
@@ -56,9 +59,7 @@
 				if(state.currentUser){
 					currentUser = await getCurrentUser(state.currentUser);
 					if(currentUser){
-						userName =currentUser.Username;
-						console.log('userName: ',userName);
-						await getCurrentUserData(currentUser);
+						currentUser = await getCurrentUserData(currentUser);
 					}
 					
 				}
@@ -69,13 +70,11 @@
 		// check identity for already logged in user
 		currentUser = await getCurrentUser();
 		if(currentUser){
-			console.log('ready to create scene with current user: ',currentUser);
-
 			if(currentUser){
-				await getCurrentUserData(currentUser);
+				currentUser = await getCurrentUserData(currentUser);
 			}
 			loggedIn = true;
-			console.log('create scene with current user: ',currentUser);
+
 			createScene(el, width, height, 2000, currentUser).then((canvasWorker)=>{
 
 				canvasWorker.onmessage = (message)=>{
@@ -87,7 +86,6 @@
 							showUser = false;
 						break;
 						case 'ready':
-							console.log('ready');
 							ready = true;
 						break;          
 						default:
@@ -109,15 +107,10 @@
 								};
 		console.log(getFollowerParams);
 		currentUser.followers = await getFollowersForUser(getFollowerParams);
-		if(currentUser.followers){
-			console.log('currentUser.followers: ',currentUser.followers.PublicKeyToProfileEntry
-		);
+		currentUser.followerIds = currentUser.followers.map(obj => [obj.PublicKeyBase58Check]);					
+		console.log('currentUser.followerIds: ',currentUser.followerIds);
 
-		} else {
-			console.log('no one is following this user');
-			console.log(currentUser.followers)
 
-		}
 
 		console.log('currentUser ',currentUser);
 		let getFollowingParams = {PublicKeyBase58Check: currentUser.publicKey,
@@ -127,14 +120,9 @@
 								};
 		console.log(getFollowingParams);
 		currentUser.following = await getFollowersForUser(getFollowingParams);
-		if(currentUser.following){
-			console.log('currentUser.following: ',currentUser.following.PublicKeyToProfileEntry);
-		} else {
-			console.log(' this user is not following anyone');
-			console.log(currentUser.following)
-
-		}
-
+		
+		currentUser.followingIds = currentUser.following.map(obj => [obj.PublicKeyBase58Check]);
+		console.log('currentUser.followingIds: ',currentUser.followingIds);
 		loggedIn = true;		
 	}
 	const formatDate =(date) =>{
@@ -205,8 +193,7 @@
 
 	const getUserData = async (user)=>{
 		user.Username = await getUsernameForPublicKey(user.publicKey);
-		user.profileURL = buildProfilePictureUrl(user.publicKey,{nodeURI:'https://node.deso.org'});
-		profileURL = user.profileURL;
+		user.profileURL =buildProfilePictureUrl(user.publicKey,{nodeURI:'https://node.deso.org'});
 		return user;
 	}
 
@@ -223,10 +210,10 @@
 {#if loading===true}	
 <div class="loader-ctr" style="text-align: center;">
 	<img alt="3DeSocial Logo" style="max-height: 140px; margin: 0 auto;" src="/3desocial.gif"/>
-	{#if loggedIn && userName!==null && profileURL!==null}
+	{#if loggedIn}
 		<h1>Welcome</h1>
-		<p>You are logged in as {userName}</p>
-		<div><img src="{profileURL}"/></div>
+		<p>You are logged in as {currentUser.Username}</p>
+		<div><img src="{currentUser.profileURL}"/></div>
 		
 		<button id="logout" on:click={handleLogOutClick}>Log Out</button>
 

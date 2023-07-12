@@ -9,9 +9,11 @@ import { json } from '@sveltejs/kit';
 
 export const createScene = async (el, width,height, count, user) => {
   currentUser = user;
+  console.log('createScene');
+  console.log(user);
   return new Promise((resolve, reject) => {
-    console.log(currentUser);
-    getPostImages(count, currentUser.publicKey).then((images)=>{
+    let pk = (user.publicKey)?user.publicKey:null;
+    getPostImages(count, pk).then((images)=>{
       console.log('imagearray:');
 console.log(images);
         const offscreen = el.transferControlToOffscreen();
@@ -40,7 +42,10 @@ console.log(images);
             window.dispatchEvent(new Event('resize'));      
 
             resolve(canvasWorker);
-      })
+      }).catch((err)=>{
+        console.log('error getting post images');
+        console.log(err);
+      });
     })
 }
 
@@ -261,6 +266,7 @@ const getPostImages = async(count, publicKey)=>{
       let follower = isUserFollowedBy(post.ProfileEntryResponse.PublicKeyBase58Check, publicKey);      
      // let isHodling = isUserFollowedBy(post.ProfileEntryResponse.PublicKeyBase58Check, publicKey);      
     //  let isHodler = isUserFollowedBy(post.ProfileEntryResponse.PublicKeyBase58Check, publicKey);      
+    console.log('following: ', following);
 
       console.log('follower: ', follower);
 
@@ -276,7 +282,7 @@ const getPostImages = async(count, publicKey)=>{
                     description: post.Body,
                     timeStamp: post.TimestampNanos,
                     likeCount: post.likeCount,
-                    userName:post.ProfileEntryResponse?.Username,
+                    userName:post.ProfileEntryResponse.Username,
                     userDesc: post.ProfileEntryResponse?.Description,
                     userPk: post.ProfileEntryResponse.PublicKeyBase58Check,
                     userProfileImgUrl: buildProfilePictureUrl(post.ProfileEntryResponse.PublicKeyBase58Check,{nodeURI:'https://node.deso.org'}) 
@@ -295,13 +301,17 @@ const getPostImages = async(count, publicKey)=>{
 }
 
 const isUserFollowing = (postPublicKey) =>{
-  console.log('isUserFollowing: ',postPublicKey);
-  return currentUser.followingIds.indexOf(postPublicKey);
+  if(!postPublicKey){
+    throw new Error('isUserFollowing: postPublicKey is null');
+  };  
+  return (currentUser.following.PublicKeyToProfileEntry[postPublicKey])?true : false;
 }
 
 const isUserFollowedBy = (postPublicKey) =>{
-  console.log('isUserFollowedBy: ',postPublicKey);
-  return currentUser.followerIds.indexOf(postPublicKey);
+  if(!postPublicKey){
+    throw new Error('isUserFollowing: postPublicKey is null');
+  };
+  return (currentUser.followers.PublicKeyToProfileEntry[postPublicKey])?true : false;
 }
 
 const getPosts = async (count, publicKey, feed)=>{
@@ -321,7 +331,7 @@ const getPosts = async (count, publicKey, feed)=>{
 export const startAnimation = ()=>{
   initController();
   let payload = { method: 'aninmate'};
-  console.log('sending messgage');
+  console.log('sending messgage aninmate');
   console.log(canvasWorker);
 canvasWorker.postMessage(payload);   
 }
