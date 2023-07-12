@@ -9,13 +9,11 @@ import { json } from '@sveltejs/kit';
 
 export const createScene = async (el, width,height, count, user) => {
   currentUser = user;
-  console.log('createScene');
-  console.log(user);
+
   return new Promise((resolve, reject) => {
     let pk = (user.publicKey)?user.publicKey:null;
     getPostImages(count, pk).then((images)=>{
-      console.log('imagearray:');
-console.log(images);
+
         const offscreen = el.transferControlToOffscreen();
         
         let payload = { 
@@ -266,10 +264,6 @@ const getPostImages = async(count, publicKey)=>{
       let follower = isUserFollowedBy(post.ProfileEntryResponse.PublicKeyBase58Check, publicKey);      
      // let isHodling = isUserFollowedBy(post.ProfileEntryResponse.PublicKeyBase58Check, publicKey);      
     //  let isHodler = isUserFollowedBy(post.ProfileEntryResponse.PublicKeyBase58Check, publicKey);      
-    console.log('following: ', following);
-
-      console.log('follower: ', follower);
-
       let imgData = {url:(post.ImageURLs)?post.ImageURLs[0]:null,
                     following: following,
                     follower: follower,
