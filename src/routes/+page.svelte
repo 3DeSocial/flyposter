@@ -1,5 +1,5 @@
 <script>
-	import { identity,  configure, getUsernameForPublicKey, buildProfilePictureUrl, getFollowersForUser  } from 'deso-protocol';
+	import { identity,  configure, getUsersStateless, getUsernameForPublicKey, buildProfilePictureUrl, getFollowersForUser  } from 'deso-protocol';
 	import { onMount } from 'svelte';
 	import { writable } from 'svelte/store';	
 	import { createScene, startAnimation } from '../lib/scene.js';
@@ -74,29 +74,9 @@
 			if(currentUser){
 				await getCurrentUserData(currentUser);
 			}
-			
-			loggedIn = true;
-			createScene(el, width, height, 60, currentUser).then((canvasWorker)=>{
 
-				canvasWorker.onmessage = (message)=>{
-					let data = message.data;
-					switch(data.method){
-						case 'hudtext':
-							selectedPost = data;
-							postDateTime = formatDate(parseInt(data.timeStamp) / 1000000);
-							showUser = false;
-						break;
-						case 'ready':
-							console.log('ready');
-							ready = true;
-						break;          
-						default:
-							console.log('unknown message');
-							console.log(data);     
-						break;
-					}
-				};
-			});
+			loggedIn = true;
+			setUpScene(el, width, height, 60, currentUser);
 		};
 	})
 
@@ -126,6 +106,33 @@
 		}
 	}
 
+	const setUpScene = (el, width, height, noPosts, currentUser) =>{
+		console.log('setup scene', el, width, height, noPosts, currentUser);
+		if(!initialized){
+			createScene(el, width, height, noPosts, currentUser).then((canvasWorker)=>{
+
+				canvasWorker.onmessage = (message)=>{
+					let data = message.data;
+					switch(data.method){
+						case 'hudtext':
+							selectedPost = data;
+							postDateTime = formatDate(parseInt(data.timeStamp) / 1000000);
+							showUser = false;
+						break;
+						case 'ready':
+							console.log('ready');
+							ready = true;
+						break;          
+						default:
+							console.log('unknown message');
+							console.log(data);     
+						break;
+					}
+				};
+				});
+			initialized = true;
+		}
+	}
 	const handleProfileClick=()=>{
 		toggleUser();
     // You can add more code here to handle the button click
@@ -136,7 +143,8 @@
   	}
 	const handleGuestClick=()=>{
 		currentUser = {'Username':'Guest'};
-		startAnimation();
+		loggedIn = true;
+		setUpScene(el, width, height, 60, currentUser);
 	}
 
 	const handleLoginClick=async()=>{
@@ -175,6 +183,7 @@
 			const state = identity.snapshot();
 			if (state.currentUser) {
 				user = state.currentUser;
+				console.log('current user', user);
 			} else {
 				// no current user
 				return false;
@@ -184,7 +193,12 @@
 	}
 
 	const getUserData = async (user)=>{
+
 		user.Username = await getUsernameForPublicKey(user.publicKey);
+		let userProfile = await getUsersStateless({PublicKeysBase58Check: [user.publicKey]});
+		console.log('userProfile', userProfile);
+		user.ProfileEntryResponse = userProfile.UserList[0];
+		console.log('user', user);
 		user.profileURL = buildProfilePictureUrl(user.publicKey,{nodeURI:'https://node.deso.org'});
 		profileURL = user.profileURL;
 		return user;
@@ -210,21 +224,22 @@
 		
 		<button id="logout" on:click={handleLogOutClick}>Log Out</button>
 
+		{#if ready===true && loggedIn===true && userName!==null}	
+			<h2>Controls</h2>
+			<p>Steering: W S A D</p>
+			<p>Faster = R, Slower = F</p>
+			<button on:click={handleStart}>Start</button>
+		{:else}
+			<h1>Please Wait...</h1>
+			<p>Loading latest posts.</p>	
+		{/if}
 	{:else}
 		<h1>Please Log in</h1>
 		<button id="guest" on:click={handleGuestClick}>Guest</button>
 		<button id="login" on:click={handleLoginClick}>Login With DeSo</button>
 	{/if}
 
-	{#if ready===true}	
-		<h2>Controls</h2>
-		<p>Steering: W S A D</p>
-		<p>Faster = R, Slower = F</p>
-		<button on:click={handleStart}>Start</button>
-	{:else}
-		<h1>Please Wait...</h1>
-		<p>Loading latest posts.</p>	
-	{/if}
+
 </div>
 {/if}
 <div class="space-ctr" id="space-ctr">

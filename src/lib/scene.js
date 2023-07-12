@@ -202,31 +202,50 @@ const getPostImages = async(count, publicKey)=>{
   console.log('posts.length',posts.length);
   posts.forEach(post => {
     if(post.ProfileEntryResponse){
-      let following = isUserFollowing(post.ProfileEntryResponse.PublicKeyBase58Check);
-      let follower = isUserFollowedBy(post.ProfileEntryResponse.PublicKeyBase58Check, publicKey);      
-     // let isHodling = isUserFollowedBy(post.ProfileEntryResponse.PublicKeyBase58Check, publicKey);      
-    //  let isHodler = isUserFollowedBy(post.ProfileEntryResponse.PublicKeyBase58Check, publicKey);      
+      let postProfile = post.ProfileEntryResponse;
+    
       let imgData = {url:(post.ImageURLs)?post.ImageURLs[0]:null,
-                    following: following,
-                    follower: follower,
-                    liked: post.PostEntryReaderState.LikedByReader,
-                    dimondsSent: post.PostEntryReaderState.DiamondLevelBestowed,
                     isComment: (post.ParentStakeID === '')?false:true,
                     isNFT: post.IsNFT,
-                    creatorCoinPrice: post.ProfileEntryResponse.CoinPriceDeSoNanos,
+                    creatorCoinPrice: postProfile.CoinPriceDeSoNanos,
                     postHashHex: post.PostHashHex,
                     description: post.Body,
                     timeStamp: post.TimestampNanos,
                     likeCount: post.likeCount,
-                    userName:post.ProfileEntryResponse.Username,
-                    userDesc: post.ProfileEntryResponse?.Description,
-                    userPk: post.ProfileEntryResponse.PublicKeyBase58Check,
-                    userProfileImgUrl: buildProfilePictureUrl(post.ProfileEntryResponse.PublicKeyBase58Check,{nodeURI:'https://node.deso.org'}) 
+                    userName:postProfile.Username,
+                    userDesc: postProfile?.Description,
+                    userPk: postProfile.PublicKeyBase58Check,
+                    userProfileImgUrl: buildProfilePictureUrl(postProfile.PublicKeyBase58Check,{nodeURI:'https://node.deso.org'}) 
       };
+
       if((!imgData.isComment) &&
         (parseFloat(imgData.creatorCoinPrice)>0)){
         images.push(imgData);
       };
+
+      if(publicKey!==null){
+        let following = isUserFollowing(postProfile.PublicKeyBase58Check);
+        let follower = isUserFollowedBy(postProfile.PublicKeyBase58Check, publicKey);
+        let amHodling = amIHodling(postProfile,publicKey);      
+        if(amHodling){
+          console.log('amHodling',postProfile.PublicKeyBase58Check)
+        }
+
+    /*    let isHodler = isUserHodler(postProfile);  
+        if(isHodler){
+          console.log('isHodler',postProfile.PublicKeyBase58Check)
+       }*/
+        let userImgData = {
+          following: following,
+          follower: follower,
+          liked: post.PostEntryReaderState.LikedByReader,
+          dimondsSent: post.PostEntryReaderState.DiamondLevelBestowed,
+       //   isHodler: isHodler,
+          amHodling: amHodling
+       };
+
+       imgData = {...imgData, ...userImgData};
+      }
 
     }
 
@@ -235,6 +254,26 @@ const getPostImages = async(count, publicKey)=>{
 
   
 }
+
+const amIHodling = (postProfile) =>{
+  // true if post user pk is in the list of users that I hodl
+  console.log('amIHodling',postProfile);
+  if(currentUser.ProfileEntryResponse.UsersYouHODL===null){
+    return false;
+  }
+  const result =  currentUser.ProfileEntryResponse.UsersYouHODL.find(obj => obj.HODLerPublicKeyBase58Check === postProfile.PublicKeyBase58Check);
+  return (result)?true : false;
+}
+/*
+const isUserHodler = (postProfile) =>{
+  // true if my publicKey is in the list of users that hodl
+  console.log('isUserHodler',currentUser);
+  if(postProfile.UsersThatHODL===null){
+    return false;
+  }
+  const result =  postProfile.UsersThatHODL.find(obj => obj.HODLerPublicKeyBase58Check === postProfile.UsersThatHODL);
+  return (result)?true : false;
+}*/
 
 const isUserFollowing = (postPublicKey) =>{
   if(!postPublicKey){
@@ -295,7 +334,7 @@ const sendLike = async(postHashHex)=>{
   // if the user doesn't have permissions, request them
   // and abort the submit
   identity.requestPermissions({
-    GlobalDESOLimit: 10000000, // 0.01 DESO
+    GlobalDESOLimit: 1000000, // 0.01 DESO
     TransactionCountLimitMap: {
       LIKE: 100
     },

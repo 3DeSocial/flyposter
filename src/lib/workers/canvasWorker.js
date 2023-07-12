@@ -231,10 +231,8 @@ const initCanvas=(d)=>{
     // Make the camera look towards negative z
     cameraGroup.lookAt(new THREE.Vector3(0, 0,1));
 
-    addRoadSegments(images).then(()=>{
-      self.postMessage({method:'ready'})
-       
-    })
+    addRoadSegments(images);
+    self.postMessage({method:'ready'})
     
 
 }
@@ -246,7 +244,7 @@ const startAnimation = () =>{
   startTunnelAnimation();
 
   const animate = function () {
-    
+
     for (let i = updatables.length - 1; i >= 0; i--) { 
       const {mesh, targetVector} = updatables[i];
       if(mesh.position){
@@ -325,40 +323,22 @@ const addCube = () =>{
 }
 
 const addRoadSegments = async(images) => {
-  var response = await fetch('/textures/scifi_surface.jpg');
-  var blob = await response.blob();
-  var bitmap = await createImageBitmap(blob);
+  for (var i = 0; i < 2; i++) {
+    var roadSegment = new THREE.Group();
 
-  return new Promise((resolve, reject) => {
-    // Create texture
-    var texture = new THREE.Texture(bitmap);
-    texture.needsUpdate = true;
+    roadSegment.position.z = i === 0 ? 0 : -1000; // Position road segments
 
-    var roadGeometry = new THREE.PlaneGeometry(10, 1000);
-    roadGeometry.rotateX(-Math.PI / 2); // Rotate to lie flat
-    var roadMaterial = new THREE.MeshBasicMaterial({ map: texture });
+    scene.add(roadSegment);
+    roadSegments.push(roadSegment);
+  }
 
-    for (var i = 0; i < 2; i++) {
-      var roadSegment = new THREE.Group();
-      var road = new THREE.Mesh(roadGeometry, roadMaterial);
-      road.position.y = -40; // Position road segments
+  addCubesToSegments(images).then((images) => {
 
-      roadSegment.add(road);
-      roadSegment.position.z = i === 0 ? 0 : -1000; // Position road segments
-
-      scene.add(roadSegment);
-      roadSegments.push(roadSegment);
-    }
-
-    addCubesToSegments(images).then((images) => {
-
-      positionCubes(images);
-      resolve();
-    }).catch((error) => {
-      // Handle any errors that occurred during promise execution
-      console.error('Some posts could not be loaded:', error);
-    });
-  })
+    positionCubes(images);
+  }).catch((error) => {
+    // Handle any errors that occurred during promise execution
+    console.error('Some posts could not be loaded:', error);
+  });
 }
 
 
