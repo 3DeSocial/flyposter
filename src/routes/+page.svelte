@@ -76,7 +76,7 @@
 			}
 			loggedIn = true;
 			console.log('create scene with current user: ',currentUser);
-			createScene(el, width, height, 2000, currentUser).then((canvasWorker)=>{
+			createScene(el, width, height, 200, currentUser).then((canvasWorker)=>{
 
 				canvasWorker.onmessage = (message)=>{
 					let data = message.data;

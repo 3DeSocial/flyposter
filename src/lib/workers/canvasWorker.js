@@ -14,7 +14,7 @@ var roadWidth = 40; // Width of the road
 var cameraSpeed = 0.01;
 var rotationSpeed =  0.01;
 movementSpeed = 20;
-var tunnelSpeed = movementSpeed/100;
+var tunnelSpeed = movementSpeed/10000;
 
 
 
@@ -247,26 +247,11 @@ cameraGroup.lookAt(new THREE.Vector3(0, 0,1));
 const startAnimation = () =>{
 
   var clock = new THREE.Clock();
-const animate = function () {
-  cubes.forEach((cube)=>{
-    // cube.rotation.x += 0.01;
-    switch(cube.userData.direction){
-    case 0:
-      cube.rotation.y -=rotationSpeed;
-      break
-    case 1:
-      cube.rotation.y +=rotationSpeed;
-      break      
-    case 3:
-      cube.rotation.x +=rotationSpeed;
-      break           
-    }
+  startCubeAnimation()
+  startTunnelAnimation();
 
-    //  cube.rotation.z += 0.01;            
-  })
-
-  var elapsedTime = clock.getDelta();
-
+  const animate = function () {
+/*
   for (let i = updatables.length - 1; i >= 0; i--) { 
     const {mesh, targetVector} = updatables[i];
     if(mesh.position){
@@ -279,29 +264,13 @@ const animate = function () {
   }
   }
 
-  if(tunnelTexture){
-    // Move road segments
-    tunnelTexture.offset.y -= tunnelSpeed * elapsedTime;
-    tunnelTexture.offset.x -= (tunnelSpeed/2) * elapsedTime;
-    roadSegments.forEach((roadSegment, i) => {
-      roadSegment.position.z += 0.1;
-
-      let nextRoadSegment = roadSegments[(i + 1) % roadSegments.length];
-      if (roadSegment.position.z > camera.position.z + 500) {
-        roadSegment.position.z = nextRoadSegment.position.z - 500;
-      }
-    })
-  }
-
-
-  
   if (selectedMesh){
       // Generate a new target position if the camera is close to the current target
       if (selectedMesh.position.distanceTo(centerPosition) > 1) {
         // Move the selectedMesh towards the target position
         selectedMesh.position.lerp(centerPosition, cameraSpeed);
       }
-  }
+  }  */
     // Update the time uniform of the shader material
   // material.uniforms.time.value = clock.getElapsedTime();
   if(renderer){
@@ -313,6 +282,42 @@ const animate = function () {
 animate()
 }
 
+const startCubeAnimation = () =>{
+  setInterval(() => {
+    cubes.forEach((cube) => {
+      switch(cube.userData.direction){
+        case 0:
+          cube.rotation.y -= rotationSpeed;
+          break
+        case 1:
+          cube.rotation.y += rotationSpeed;
+          break      
+        case 3:
+          cube.rotation.x += rotationSpeed;
+          break           
+      }
+    });
+  }, 1000 / 60);
+}
+  
+const startTunnelAnimation = () =>{
+  setInterval(() => {
+    if(tunnelTexture){
+      // Move road segments
+      tunnelTexture.offset.y -= tunnelSpeed;
+      tunnelTexture.offset.x -= (tunnelSpeed/2);
+      roadSegments.forEach((roadSegment, i) => {
+        roadSegment.position.z += 0.1;
+  
+        let nextRoadSegment = roadSegments[(i + 1) % roadSegments.length];
+        if (roadSegment.position.z > camera.position.z + 500) {
+          roadSegment.position.z = nextRoadSegment.position.z - 500;
+          console.log('move road segment');
+        }
+      })
+    }
+  }, 1000 / 60);
+}
 
 const addCube = () =>{
   const geometry = new THREE.BoxGeometry(1, 1, 1);
