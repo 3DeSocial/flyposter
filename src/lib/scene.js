@@ -47,64 +47,6 @@ export const createScene = async (el, width,height, count, user) => {
     })
 }
 
-/*
-const processPostImages = (images) =>{
-
-
-// Trigger all three updates at the same time for each object
-let promises = array.map(obj => 
-  Promise.all([imgProccess1(obj), imgProccess2(obj), imgProccess3(obj)])
-    .then(updatedObjects => {
-      // All three updates for this object are complete
-      // Perform the check and return the updated object if it passes the check
-      if (checkObject(obj)) {
-        return obj;
-      }
-    })
-    .catch(error => {
-      // If any request fails, catch the error and return null
-      console.error(error);
-      return null;
-    })
-);
-
-// Wait for all objects to be updated and checked
-Promise.all(promises).then(results => {
-  // Filter out any null values (these are the objects that had a request fail)
-  let filteredArray = results.filter(obj => obj !== null);
-  console.log(filteredArray);
-});
-
-}
-
-imgProccess1 = async (obj) =>{
-  // get following status
-}
-
-imgProccess2 = async (obj) =>{
-  // get followed status
-}
-
-imgProccess3 = async (obj) =>{
-  // get liked status
-}
-
-imgProccess3 = async (obj) =>{
-  // get diamond status
-}
-
-// Assume we have a function that checks an object
-checkObject = (obj) => {
-  // Is the post a comment?
-
-  // Is Coin price > 0?
-
-  // Is it a repost?
-
-
-  // Return true if the object passes the check, false otherwise
-}
-*/
 const initController =() =>{
 
   inputHandler = new InputHandler();

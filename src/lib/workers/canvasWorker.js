@@ -208,20 +208,15 @@ const displayPost = (postData) =>{
   
 }
 const initCanvas=(d)=>{
-  console.log(d);
+  console.log('initCanvas',d);
     const canvas = d.canvas;
     const innerWidth = d.width;
-    const innerHeight = d.height;
-    clientWidth = innerWidth;
-    clientHeight = innerHeight;    
+    const innerHeight = d.height;  
     const images = d.images;
-//const devicePixelRatio = d.devicePixelRatio;
+    const devicePixelRatio = d.devicePixelRatio;
     renderer = new THREE.WebGLRenderer( { canvas:canvas } );
-    console.log('initCanvas');
-  //  renderer.setPixelRatio( devicePixelRatio );    
- //   renderer.setSize( innerWidth, innerHeight );    
-	//	renderer.shadowMap.enabled = true;
-//		renderer.xr.enabled = true;    
+    renderer.setPixelRatio( devicePixelRatio );    
+
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
     cameraGroup = new THREE.Group();
@@ -229,12 +224,12 @@ const initCanvas=(d)=>{
     scene.add(cameraGroup)
     createTunnel();
     // Position camera
-// Position camera
-cameraGroup.position.x = 0; // Height similar to a car
-cameraGroup.position.y = 0.1; // Height similar to a car
-cameraGroup.position.z = 0; // Start at the beginning of the road
-// Make the camera look towards negative z
-cameraGroup.lookAt(new THREE.Vector3(0, 0,1));
+    // Position camera
+    cameraGroup.position.x = 0; // Height similar to a car
+    cameraGroup.position.y = 0.1; // Height similar to a car
+    cameraGroup.position.z = 0; // Start at the beginning of the road
+    // Make the camera look towards negative z
+    cameraGroup.lookAt(new THREE.Vector3(0, 0,1));
 
     addRoadSegments(images).then(()=>{
       self.postMessage({method:'ready'})
@@ -251,17 +246,17 @@ const startAnimation = () =>{
   startTunnelAnimation();
 
   const animate = function () {
-/*
-  for (let i = updatables.length - 1; i >= 0; i--) { 
-    const {mesh, targetVector} = updatables[i];
-    if(mesh.position){
-    if (mesh.position.distanceTo(targetVector) > 1) {
-      // Move the selectedMesh towards the target position
-      mesh.position.lerp(targetVector, cameraSpeed);
-    } else {
-      updatables.splice(i, 1);
+    
+    for (let i = updatables.length - 1; i >= 0; i--) { 
+      const {mesh, targetVector} = updatables[i];
+      if(mesh.position){
+      if (mesh.position.distanceTo(targetVector) > 1) {
+        // Move the selectedMesh towards the target position
+        mesh.position.lerp(targetVector, cameraSpeed);
+      } else {
+        updatables.splice(i, 1);
+      }
     }
-  }
   }
 
   if (selectedMesh){
@@ -270,7 +265,8 @@ const startAnimation = () =>{
         // Move the selectedMesh towards the target position
         selectedMesh.position.lerp(centerPosition, cameraSpeed);
       }
-  }  */
+  }
+  
     // Update the time uniform of the shader material
   // material.uniforms.time.value = clock.getElapsedTime();
   if(renderer){

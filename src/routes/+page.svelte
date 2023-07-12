@@ -3,7 +3,7 @@
 	import { onMount } from 'svelte';
 	import { writable } from 'svelte/store';	
 	import { createScene, startAnimation } from '../lib/scene.js';
-  import { UnsignedShortType } from 'three';
+  	import { UnsignedShortType } from 'three';
 	let currentUserStore = writable(null);
 	let currentUser = null;
 	let userName = null
@@ -50,14 +50,15 @@
 			FOLLOW: 100
 			}
 			}
-		})		
+		})
+
+		// check identity for already logged in user
 		identity.subscribe( async (state) => {
 			const event = state.event;
 				if(state.currentUser){
 					currentUser = await getCurrentUser(state.currentUser);
 					if(currentUser){
 						userName =currentUser.Username;
-						console.log('userName: ',userName);
 						await getCurrentUserData(currentUser);
 					}
 					
@@ -69,14 +70,13 @@
 		// check identity for already logged in user
 		currentUser = await getCurrentUser();
 		if(currentUser){
-			console.log('ready to create scene with current user: ',currentUser);
 
 			if(currentUser){
 				await getCurrentUserData(currentUser);
 			}
+			
 			loggedIn = true;
-			console.log('create scene with current user: ',currentUser);
-			createScene(el, width, height, 200, currentUser).then((canvasWorker)=>{
+			createScene(el, width, height, 60, currentUser).then((canvasWorker)=>{
 
 				canvasWorker.onmessage = (message)=>{
 					let data = message.data;
@@ -101,39 +101,19 @@
 	})
 
 	const getCurrentUserData = async (currentUser) =>{
-		console.log('currentUser ',currentUser);
 		let getFollowerParams = {PublicKeyBase58Check: currentUser.publicKey,
 								Username:currentUser.Username,
 								GetEntriesFollowingUsername: true,
 								NumToFetch: 10000000
 								};
-		console.log(getFollowerParams);
 		currentUser.followers = await getFollowersForUser(getFollowerParams);
-		if(currentUser.followers){
-			console.log('currentUser.followers: ',currentUser.followers.PublicKeyToProfileEntry
-		);
 
-		} else {
-			console.log('no one is following this user');
-			console.log(currentUser.followers)
-
-		}
-
-		console.log('currentUser ',currentUser);
 		let getFollowingParams = {PublicKeyBase58Check: currentUser.publicKey,
 							Username:currentUser.Username,
 								GetEntriesFollowingUsername: false,
 								NumToFetch: 10000000
 								};
-		console.log(getFollowingParams);
 		currentUser.following = await getFollowersForUser(getFollowingParams);
-		if(currentUser.following){
-			console.log('currentUser.following: ',currentUser.following.PublicKeyToProfileEntry);
-		} else {
-			console.log(' this user is not following anyone');
-			console.log(currentUser.following)
-
-		}
 
 		loggedIn = true;		
 	}
